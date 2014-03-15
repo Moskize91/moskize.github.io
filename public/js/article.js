@@ -109,7 +109,7 @@ YUI().use("node", "overlay", "anim", function(Y){
             if(node.head) {
                 title = node.head.get('innerHTML');
             } else {
-                title = "ÄÚÈÝ";
+                title = "å†…å®¹";
             }
             var indexNode = Y.Node.create('<div id="index-'+i+'"class="index"><div class="before" style="display:none"></div><a href="#">'+title+'</a></div>');
             index.append(indexNode);
