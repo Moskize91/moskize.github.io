@@ -73,6 +73,8 @@ YUI().use("node", "overlay", "anim", function(Y){
         };
         Y.on('scroll', scrollHandle);
         Y.on('mousewheel', scrollHandle);
+        
+        onCursorMove(0);
     };
     
     var lastChoosedIndex = 0;
