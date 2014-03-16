@@ -77,7 +77,7 @@ YUI().use("node", "overlay", "anim", function(Y){
         onCursorMove(0);
     };
     
-    var lastChoosedIndex = 0;
+    var lastChoosedIndex = -1;
     
     var onCursorMove = function(cursor) {
         if(articleNodes.length<=0){
@@ -95,7 +95,9 @@ YUI().use("node", "overlay", "anim", function(Y){
             return;
         }
         Y.one('#index-'+index).one('.before').show();
-        Y.one('#index-'+lastChoosedIndex).one('.before').hide();
+        if(lastChoosedIndex >= 0) {
+            Y.one('#index-'+lastChoosedIndex).one('.before').hide();
+        }
         lastChoosedIndex = index;
     };
     

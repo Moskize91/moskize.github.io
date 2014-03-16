@@ -1,3 +1,7 @@
 markdown: redcarpet
 baseurl: moskize.github.io
 encoding: utf-8
+
+paginate: 3
+paginate_path: "blog/page:num"
+
