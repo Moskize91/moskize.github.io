@@ -11,7 +11,7 @@ title: 主页
 {% endfor %}
 <div id="pagination" class="button-box">
     {% if paginator.previous_page %}
-    <span class="click" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
+    <span class="click" onclick="clickButton('/posts/page{{ paginator.previous_page }}');">&lt;&lt;</span>
     {% else %}
     <span class="disable">&lt;&lt;</span>
     {% endif %}
@@ -21,11 +21,11 @@ title: 主页
         {% elsif page == 1 %}
         <span class="click" onclick="clickButton('/');">1</span>
         {% else %}
-        <span class="click" onclick="clickButton('/page{{ page }}');">{{ page }}</span>
+        <span class="click" onclick="clickButton('/posts/page{{ page }}');">{{ page }}</span>
         {% endif %}
     {% endfor %}
     {% if paginator.next_page %}
-    <span class="click" onclick="clickButton('/page{{ paginator.next_page }}');">&gt;&gt;</span>
+    <span class="click" onclick="clickButton('/posts/page{{ paginator.next_page }}');">&gt;&gt;</span>
     {% else %}
     <span class="disable">&gt;&gt;</span>
     {% endif %}
