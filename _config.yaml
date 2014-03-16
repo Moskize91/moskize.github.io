@@ -4,5 +4,5 @@ encoding: utf-8
 
 paginate: 5
 destination: _site/posts
-paginate_path: "posts/page:num"
+paginate_path: "page:num"
 
