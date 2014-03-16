@@ -13,7 +13,11 @@ title: 主页
 {% endfor %}
 <div id="pagination" class="button-box">
     {% if paginator.previous_page %}
-    <span class="click" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
+        {% if paginator.previous_page == 1 %}
+        <span class="click" onclick="clickButton('/');">&lt;&lt;</span>
+        {% else %}
+        <span class="click" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
+        {% endif %}
     {% else %}
     <span class="disable">&lt;&lt;</span>
     {% endif %}
