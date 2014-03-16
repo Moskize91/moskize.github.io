@@ -32,6 +32,9 @@ ul {
     margin-top: 40px;
 	margin-bottom: auto;
 }
+.disable {
+	opacity: .5;
+}
 ::-webkit-scrollbar {
 	width:12px;
 	margin-right:2px
@@ -217,6 +220,31 @@ ul {
 	max-height: 50px;
 	line-height: 25px;
 }
-#post-list .buble-container .content ::-webkit-scrollbar {
-	width:5px;
+#post-list #pagination {
+	margin-left: 47px;
+	font-size: 14px;
+}
+
+#post-list #pagination span{
+	margin-right: 8px;
+}
+#post-list .button-box span {
+	color: #fff;
+	font-size: 16px;
+	text-transform: uppercase;
+	font-weight: 700;
+	padding: 8px 12px 10px;
+	border-radius: 5px;
+	/* border: 1px solid #333; */
+	box-shadow: 0 1px 3px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.5);
+	background: #777;
+}
+#post-list .button-box span.click:hover {
+	-moz-box-shadow:0px 0px 8px #E0FF96; -webkit-box-shadow:0px 0px 8px #E0FF96; box-shadow:0px 0px 8px #E0FF96;
+	cursor: pointer
+}
+#post-list .button-box span.current {
+	color: #FFCC00;
+	font-weight: bold;
+	background-color: #999999;
 }
