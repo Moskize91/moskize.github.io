@@ -24,11 +24,6 @@ title: 主页
         <span class="click" onclick="clickButton('/page{{ page }}');">{{ page }}</span>
         {% endif %}
     {% endfor %}
-    <span class="click" onclick="clickButton('/');">1</span>
-    <span class="current">2</span>
-    <span class="click" onclick="clickButton('/');">3</span>
-    <span class="click" onclick="clickButton('/');">4</span>
-    <span class="click" onclick="clickButton('/');">5</span>
     {% if paginator.next_page %}
     <span class="click" onclick="clickButton('/page{{ paginator.next_page }}');">&gt;&gt;</span>
     {% else %}
