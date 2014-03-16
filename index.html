@@ -3,13 +3,12 @@ layout: default
 title: 主页
 ---
 <div id="post-list">
-{% for post in site.posts %}
+{% for post in paginator.posts %}
     <div class="buble-container">
         <div class="title"><a href="{{ post.url }}" target="_blank">{{ post.title }}</a></div>
         <div class="content"><a href="{{ post.url }}" target="_blank">{{ post.excerpt }}</a></div>
     </div>
 {% endfor %}
-<lable>={{paginator}}{{ paginator.page }}</lable>
 <div id="pagination" class="button-box">
     {% if paginator.previous_page %}
     <span class="click" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
