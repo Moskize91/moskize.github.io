@@ -12,6 +12,7 @@ title: 主页
         <div class="content"><a href="{{ post.url }}" target="_blank">{{ post.excerpt }}</a></div>
     </div>
 {% endfor %}
+{{ paginator.page }}
 <div id="pagination" class="button-box">
     {% if paginator.previous_page %}
     <span class="click" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
