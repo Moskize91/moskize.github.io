@@ -3,7 +3,9 @@ layout: default
 title: 主页
 ---
 <div id="post-list">
-<lable>paginator.total_pages</lable>{{ paginator.total_pages}}
+{% for post in site.posts %}
+    <a href="{{ post.url }}">{{ post.title }}</a></br>
+{% endfor %}
 {% for post in paginator.posts %}
     <div class="buble-container">
         <div class="title"><a href="{{ post.url }}" target="_blank">{{ post.title }}</a></div>
