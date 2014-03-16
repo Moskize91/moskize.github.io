@@ -7,7 +7,7 @@ title: 主页
     <div class="buble-container">
         <div class="title"><a href="{{ post.url }}" target="_blank">{{ post.title }}</a></div>
         <div class="content"><a href="{{ post.url }}" target="_blank">
-        {{ post.excerpt | remove: '<p>' | remove: '</p>' | remove: '<a>' | remove: '</a>'| remove: '<img>' | remove: '</img>' | remove: '<h1>' | remove: '</h1>' | remove: '<h2>' | remove: '</h2>| remove: '<h3>' | remove: '</h3>| remove: '<h4>' | remove: '</h4>| remove: '<h5>' | remove: '</h5>| remove: '<h6>' | remove: '</h6>' ' ' ' '  }}
+        {{ post.excerpt | truncatewords:250 | remove: '<p>' | remove: '</p>' | remove: '<a>' | remove: '</a>'| remove: '<img>' | remove: '</img>' | remove: '<h1>' | remove: '</h1>' | remove: '<h2>' | remove: '</h2>| remove: '<h3>' | remove: '</h3>| remove: '<h4>' | remove: '</h4>| remove: '<h5>' | remove: '</h5>| remove: '<h6>' | remove: '</h6>' ' ' ' '  }}
         </a></div>
     </div>
 {% endfor %}
