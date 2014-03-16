@@ -89,9 +89,7 @@ end
 <p> <span style="font-size:12.5px;line-height:1.5;">如果在POST提交的时候加一个字段 </span>'authenticity_token' =&gt;'eNaG5Hp25pctFmtko9LEvXWtbnBXnN8wxzzlcpMeupc='，那么验证就会通过，至少Rails是如此。但是，这个csrf-token不是一个固定值，因此每次提交图片的时候必须动态的从head里取才行。 </p> 
 <p> 因此，我们要通过修改KindEditor的源代码，令它在上传图片的时候，把authenticity_token字段带上。 </p> 
 <p> 首先，找到kindeditor.js文件，然后找到大约4100行前后的范围（我的版本是4.1.x具体忘了），算了，我不写怎么找了，反正也不好找。我直接贴出我是怎么改的，如果你要想跟着改的话，直接ctrl+F找到附近位置就好了。 </p> 
-<pre class="brush:js; toolbar: true; auto-links: false;">.
-.
-.
+{% highlight javascript linenos %}
 		var hiddenElements = [];
 		for(var k in extraParams){
 			hiddenElements.push('&lt;input type=&quot;hidden&quot; name=&quot;' + k + '&quot; value=&quot;' + extraParams[k] + '&quot; /&gt;');
@@ -115,9 +113,7 @@ end
 			(options.form ? '&lt;/div&gt;' : '&lt;/form&gt;'),
 			'&lt;/div&gt;'].join('');
 		var div = K(html, button.doc);
-.
-.
-.</pre> 
+{% endhighlight %}
 <pre class="brush:js; toolbar: true; auto-links: false;">//MOsky inserts this code. 后的内容是我插入的，不属于源代码的内容。</pre> 
 <p> 原理就是我直接从html文件的head中将这两个标签中的值取出来。 </p> 
 <p> 然后在提交图片的时候，生成一个input，将其name设置成<span>authenticity_token，value设置成取的token值。然后一起提交上去了。</span> </p> 
