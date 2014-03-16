@@ -1,0 +1,124 @@
+---
+layout : post
+title : JVM类装载机制的解析，以及热更新的探讨
+---
+<h3 style="text-align:center;">
+	二
+</h3>
+<p style="text-align:justify;text-indent:21pt;">
+	我现在想说说<span>Java</span><span>类的卸载。因为我的标题结尾加上了一个“及热更新的探讨”。所谓“热更新”，当然一定要包括卸载了。因为仅仅是“热加载”，前面已经说得够多的了。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	Java<span>的类是需要占据内存的。除了</span><span>Class</span><span>对象本身之外，还包括与类相关的常量池、方法区。类的卸载是靠</span><span>gc</span><span>完成的，当</span><span>gc</span><span>判定</span><span>Class</span><span>对象不可达时，类就被卸载了。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	哪些东西会被卸载？
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	不仅仅是类的<span>Class</span><span>对象，类的常量池、方法区会被卸载，连同类的静态变量也会被卸载。例如，如果在某个类中声明&nbsp;</span><span>static&nbsp;SomeType&nbsp;someobj&nbsp;=&nbsp;XXX;&nbsp;</span><span>那么该变量的引用也会被释放，如果该变量的引用是该对象唯一的引用，这个对象最终也就会被当做垃圾，它所占用的内存空间将会被回收。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	这可能有别于一般人的理解，一般人可能简单的认为，<span>Java</span><span>中的</span><span>static</span><span>变量如果不手动释放，则必须等到应用程序结束时才会消亡。实际上这个理解在极端情况下是错误的。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	总之，一个类被卸载后，它的一切都会被卸载，也就是回到它被加载、连接、初始化之前的状态。
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	类何时才会被卸载？
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	当<span>Class</span><span>对象在某一次</span><span>gc</span><span>中被判定为不可达时，该类就会被卸载。因此，类的卸载似乎和对象的释放没什么区别。实际上，就像</span><span>JVM</span><span>没有对对象的释放做规范一样，</span><span>JVM</span><span>也没有对类的卸载做规范。类的卸载策略，可能与</span><span>JVM</span><span>的具体实现有关。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	虚拟机唯一要保证的，是令类的卸载变成一个对应用程序员是一个透明的行为即可。因此，实际上完全不必担心卸载某个被依赖的类会导致程序的混乱甚至崩溃，因为如果有这种可能性，类被卸载这件事就根本不会发生！
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	怎样卸载一个类？
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	类从来不能被主动卸载掉，只能使其变得不可达，从而在某次<span>gc</span><span>中被卸载。犹如</span><span>Java</span><span>中对象的释放对程序员是透明的，类的卸载也是程序员透明的。加上</span><span>Class</span><span>对象的引用错综复杂，因此，使其变得不可达看起来似乎是一件困难的事。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	现实是，你完全可能自以为<span>Class</span><span>对象变得不可达了，其实它可达。此时，程序员完全不知情。这就像内存泄露一样，类也完全可以导致内存泄露。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	正因为这个原因，我看过的一些博客直接武断的说：类的卸载是极为困难的，或者直接说类的卸载是不可能的。
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	我完全不能同意这种观点！原因有二：其一、<span>Class</span><span>对象的引用虽然错综复杂，但并非无章可循。理清了这些关系，完全可以自信满满地令某个类变得不可达，从而避免内存泄露问题。其二、我已经至少找到一种架构，或称之为一种技巧，避免因为设计者的疏忽而造成内存泄露。内存泄露不是要十分小心才可避免，而是是可防可控的。</span>
+</p>
+<p style="text-align:justify;text-indent:21pt;">
+	我将用一张图表明有关<span>Class</span><span>对象的依赖关系。</span>
+</p>
+<div style="text-align:center;">
+	<img style="width:555px;height:403px;" alt="图片" src="http://b162.photo.store.qq.com/psb?/V10dIRsm39Dd7n/Ssnh38y1Ionkc4twWl87Nleu2i3yYG1WhvWYQRctyNg!/b/dOdklWD5HAAA&amp;bo=KwKTAQAAAAADAJ4!&amp;su=0100053505&amp;rf=2-9" />
+</div>
+<p style="text-indent:21pt;">
+	对于一个<span>Class</span><span>对象而言，它有属于它自己的常量池和方法区。常量池中存储了该类依赖的其他类的引用。这些引用可能是符号引用，可能是实例引用（具体是何种引用取决于该类是否使用某种引用，以及虚拟机的具体实现）。</span>
+</p>
+<p style="text-indent:21pt;">
+	如果常量池中存有实例引用，则这些常量池将引用那些实例对象（<span>Class</span><span>对象）。这样，一个</span><span>Class</span><span>对象引用了它依赖的部分</span><span>Class</span><span>对象。</span>
+</p>
+<p style="text-indent:21pt;">
+	同样，一个<span>Class</span><span>对象必须知道自己的超类、超级接口。因此，</span><span>Class</span><span>对象会引用自己的超类和超级接口的</span><span>Class</span><span>对象。这种引用一定是实例引用。（实际上，超类、超级接口的引用也存储在常量池中，但为了区分依赖类的引用，将它特殊表述一下。）</span>
+</p>
+<p style="text-indent:21pt;">
+	因此，我暂且得到两条结论。
+</p>
+<p style="text-indent:21pt;">
+	结论一：持有一个<span>Class</span><span>对象的引用，则任何该</span><span>Class</span><span>对象直接或间接依赖的所有类（如果被加载了），都不可能被卸载。同样，只要有一个类直接或间接依赖某个类，则该类不可能被卸载。</span>
+</p>
+<p style="text-indent:21pt;">
+	结论二：持有一个<span>Class</span><span>对象的引用，则该类的所有超类、超接口都不能被卸载。同样，如果任何一个类（或接口）存在一个没有被卸载的子类（或实现类、子接口），则该类（接口）不可能被卸载。</span>
+</p>
+<p style="text-indent:21pt;">
+	由此可见，对于一个软件而言，其所有<span>class</span><span>文件可以看做一个从包含</span><span>main</span><span>方法的根节点出发，在一张依赖图中搜索所有可达节点，所有可达节点构成的集合。而这个集合中的绝大部分类，要么全部保留在内存中，要么全部卸载。</span>
+</p>
+<p style="text-indent:21pt;">
+	对于一个模块而言，如果该模块之间的类彼此都存在依赖，则该模块必须整个地被卸载。因此，如果一个应用程序想要利用一个模块卸载另外一个模块。必要条件就是，执行卸载操作的模块必须零依赖被卸载的模块。
+</p>
+<p style="text-indent:21pt;">
+	零依赖的含义就是，被依赖的模块是完全透明的，是不可见的。
+</p>
+<p style="text-indent:21pt;">
+	根据上面的结论，卸载必须是以模块为单位。因此，所谓卸载一个强耦合的类是完全不可能的。因此，我可以放弃说“卸载类”，而应该说“卸载模块”。
+</p>
+<p style="text-indent:21pt;">
+	那么，卸载一个模块的充分条件是什么呢？
+</p>
+<p style="text-indent:21pt;">
+	回到前面的那张引用关系图，让我们来看看那些其他要素可能引用<span>Class</span><span>对象。</span>
+</p>
+<p style="text-indent:21pt;">
+	对于任何一个<span>Java</span><span>对象而言，它都一定是某个类的实例，因此，它能直接或间接的引用到该类的</span><span>Class</span><span>对象。这一推论的理由有三，其一，</span><span>JVM</span><span>在将对象进行向下转型、</span><span>instanceof</span><span>判定的时候，一定要知道对象的类型，倘若对象无法引用到类的</span><span>Class</span><span>对象，这个过程何以进行呢？其二，子类可重写父类的方法，运行时的多态令虚拟机能正确调用到对象方法（防止子类调用到父类被覆盖的方法），如果不知对象类型，何以实现？其三，</span><span>Object</span><span>类有一个</span><span>native</span><span>方法</span><span>getClass()</span><span>可以直接获取对象的类</span><span>Class</span><span>对象。</span>
+</p>
+<p style="text-indent:21pt;">
+	类加载器在加载了一个类之后，当第二次接受到该类的类名之后，加载器会直接返回该类的对象，而不是重复加载该类。虚拟机绝不允许同一个命名空间中的一个类被加载了两次，因此类加载器必须缓存所有它加载的类的<span>Class</span><span>对象，以供返回。</span>
+</p>
+<p style="text-indent:21pt;">
+	此外，<span>ClassLoader</span><span>也好，</span><span>Class</span><span>对象也好，这些本身能被变量所引用。如果某些可达的变量（局部变量、成员变量、静态变量）引用了它们，自然也会让整个模块变得可达而无法被卸载。</span>
+</p>
+<p style="text-indent:21pt;">
+	此外，某些特殊的类加载器永远是可达的，它们是<span>Bootstrap</span><span>、</span><span>Extendsion</span><span>、</span><span>System</span><span>。因此，我可以得出一条结论。</span>
+</p>
+<p style="text-indent:21pt;">
+	结论三：<span>Java</span><span>的标准类库一旦加载，永远不能卸载。</span>
+</p>
+<p style="text-indent:21pt;">
+	结论四：<span>CLASS_PATH</span><span>中的类（系统加载器加载的类），一旦加载，永远不能被卸载。</span>
+</p>
+<p style="text-indent:21pt;">
+	因此，一个模块中的所有类必须使用同一个<span>ClassLoader</span><span>实例加载。而且这个</span><span>ClassLoader</span><span>实例不能是</span><span>Extendsion</span><span>和</span><span>System</span><span>。这个</span><span>ClassLoader</span><span>实例的控制权必须掌握在操作卸载的模块那里。随时释放该实例的引用，使</span><span>ClassLoader</span><span>变得不可达。</span>
+</p>
+<p style="text-indent:21pt;">
+	此外，该模块任意类的实例都必须是不可达的，存在任何一个可达的该模块类的实例，模块都无法释放。
+</p>
+<p style="text-indent:21pt;">
+	至此，我得到了卸载模块的充分条件：模块的全部类由一个可控的<span>ClassLoader</span><span>加载；释放该模块的定义类加载器引用；释放该模块所有类的实例引用；释放该模块的</span><span>Class</span><span>对象引用。</span>
+</p>
+<p style="text-indent:21pt;">
+	还有，模块的定义类加载器、类实例、<span>Class</span><span>对象，这些东西，只要没有引用掌握在其他模块那里，也没有掌握在栈内存中，就一定可以卸载模块。特别的，模块自己引用了这些东西，尤其是模块的静态变量引用了这些东西，那是完全不影响卸载的。</span>
+</p>
+<p style="text-indent:21pt;">
+	有一种观点认为，垃圾回收判断的根节点包括所有类的静态变量，这是错误的。实际上如果一个模块变得不可达了，它的所有的类的静态变量也会变得不可达，并会被回收释放。
+</p>
