@@ -23,6 +23,7 @@ ul {
 	width: 1024px;
 	margin-right: auto;
 	margin-left: auto;
+	padding-left: 12px;
 }
 .footer {
     background: #222;
