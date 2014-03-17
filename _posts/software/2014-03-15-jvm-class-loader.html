@@ -86,7 +86,7 @@ public class A{
 请看这段代码，如果我调用someMethod()方法，一定会抛出强制类型转换异常。为什么呢？因为Object一定不是com.tzy.B的子类？但是JVM如何知道com.tzy.B不是Object的子类呢？
 <p>
 要知道在class文件中，对于com.tzy.B，存起来可能是像这种形式：
-{% hightlight java codenos %}
+{% highlight java linenos %}
 “com.tzy.B”
 {% endhighlight %}
 <p>
@@ -119,7 +119,7 @@ Java通过类加载器来实现二进制字节码的获取。
 我们可以通过实例方法Class.getClassLoader()方法，来得到某个类的加载器。就像一个孩子只能由一个母亲所生一样，一个类实例只能有一个ClassLoader。
 <p>
 ClassLoader的职能在于，通过类名，生成并返回一个Class实例。我们可以通过主动调用Class类的forName方法，指定使用某个ClassLoader载入Class实例。
-{% hightlight java codenos %}
+{% highlight java linenos %}
 Class.forName(String className,boolean init,ClassLoader classLoader)
 {% endhighlight %}
 <p>
@@ -237,7 +237,7 @@ Class classA2 = Class.forName("ClassA",false,loader2);
 在这里，我确保d:\test\ab不会被classpath访问到，因此，我们自定义的MyLoader将主动装载ClassA类，并为之生成Class实例。但现在我构造了两个MyClassLoader的实例，但分别载入一次名为”classA”的类，将其返回值赋给了classA1和classA2变量。
 <p>
 那么，问题是，下列语句将输出什么呢？
-{% hightlight java codenos %}
+{% highlight java linenos %}
 System.out.println(classA1==classA2);
 System.out.println(classA1.equels(classA2));
 {% endhighlight %}
