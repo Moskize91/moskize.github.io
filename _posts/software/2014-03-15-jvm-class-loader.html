@@ -51,11 +51,12 @@ Object obj=new Object();
 //使用反射的方法也不会！
 //可见不是所有的反射方法都会触发初始化类操作。
 com.tzy.A.class.isInstance obj);
-Class.forName(“com.tzy.A”);
-而下列语句一定会触发初始化类操作！
+Class.forName("com.tzy.A");
+
+//而下列语句一定会触发初始化类操作！
 new com.tzy.A();
 com.tzy.A.someValue = 5;
-com.tzy.A.someMethod(“helloworld”);
+com.tzy.A.someMethod("helloworld");
 cmd:Java com.tzy.A
 
 public class com.tzy.B extends com.tzy.A{
@@ -87,7 +88,7 @@ public class A{
 <p>
 要知道在class文件中，对于com.tzy.B，存起来可能是像这种形式：
 {% highlight java linenos %}
-“com.tzy.B”
+"com.tzy.B"
 {% endhighlight %}
 <p>
 对，就只是一个字符串而已。但是它表示一个类，但是在编译阶段无法验证这个字符串表示到底哪一个类，这个工作只有虚拟机能做，编译器是不管的（除了语法上的验证，但我在后面会说明，有时这个语法上的验证是不应该有的）。
