@@ -130,7 +130,7 @@ Class.forName(String className,boolean init,ClassLoader classLoader)
 无论装载是显式还是隐式，对于ClassLoader本身而言是一样的，最终会调用到ClassLoader的方法：
 <p>
 {% highlight java linenos %}
-protected Class<?> findClass(String className) throws ClassNotFoundException;
+protected Class<&iexcl;> findClass(String className) throws ClassNotFoundException;
 {% endhighlight %}
 <p>
 这个方法就是用来重写的。
