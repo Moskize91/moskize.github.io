@@ -71,9 +71,9 @@ YUI().use("node", "overlay", "anim", function(Y){
             overlay.move(offsetLeft, cursor);
             onCursorMove(getWindowCenter());
         };
-        Y.on('move', scrollHandle);
-    //    Y.on('scroll', scrollHandle);
-    //   Y.on('mousewheel', scrollHandle);
+        Y.on('gesturemove', scrollHandle);
+        Y.on('scroll', scrollHandle);
+        Y.on('mousewheel', scrollHandle);
         
         onCursorMove(0);
     };
