@@ -58,6 +58,9 @@ ul {
 ::-webkit-scrollbar-thumb:hover {
 	background: #909090; 
 }
+.fix-y {
+	position: fixed;
+}
 #website-logo {
 	width: 263px;
 	padding-top: 67px;

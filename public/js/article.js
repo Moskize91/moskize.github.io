@@ -43,7 +43,22 @@ YUI().use("node", "overlay", "anim", function(Y){
         }
     };
     
+    var onFixDiv = function(index, overlay, cursor) {
+        Y.log("fix");
+        index.addClass("fix-y");
+        overlay.move(index.get('offsetLeft'), 0);
+    };
+    
+    var onUnfixDiv = function(index, overlay, cursor) {
+        var article = Y.one('#article');
+        
+        index.removeClass("fix-y");
+        overlay.move(article.get('offsetLeft') + article.get('offsetWidth'), cursor);
+    };
+    
     var initScrollEvents = function() {
+        var fixDiv = false;
+        
         var article = Y.one('#article');
         var index = Y.one('#article-index');
         var title = Y.one('#article-index h4');
@@ -62,20 +77,27 @@ YUI().use("node", "overlay", "anim", function(Y){
         overlay.move(offsetLeft, top);
         
         var scrollHandle = function(){
-            Y.log("!!");
             var cursor = win.get('scrollTop');
+            var needFix = false;
             if(cursor < top) {
                 cursor = top;
             } else if(cursor > bottom) {
                 cursor = bottom;
+            } else {
+                needFix = true;
             }
-            overlay.move(offsetLeft, cursor);
+            if(needFix && !fixDiv) {
+                fixDiv = true;
+                onFixDiv(index, overlay, cursor);
+                
+            } else if(!needFix && fixDiv) {
+                fixDiv = false;
+                onUnfixDiv(index, overlay, cursor);
+            }
             onCursorMove(getWindowCenter());
         };
         Y.on('resize', scrollHandle);
         Y.on('scroll', scrollHandle);
-        Y.on('mousewheel', scrollHandle);
-        Y.on('touchmove', scrollHandle);
         
         onCursorMove(0);
     };
