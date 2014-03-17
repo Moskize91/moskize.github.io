@@ -1,10 +1,10 @@
 YUI().use("node", "overlay", "anim", function(Y){
     
-    var window = Y.one('window');
+    var win = Y.one('window');
     var articleNodes = [];
     
     var getWindowCenter = function() {
-        return window.get('scrollTop') + window.get('winHeight')/2;
+        return win.get('scrollTop') + win.get('winHeight')/2;
     };
     
     var isHead = function(tagName) {
@@ -62,7 +62,8 @@ YUI().use("node", "overlay", "anim", function(Y){
         overlay.move(offsetLeft, top);
         
         var scrollHandle = function(){
-            var cursor = window.get('scrollTop');
+            Y.log("!!");
+            var cursor = win.get('scrollTop');
             if(cursor < top) {
                 cursor = top;
             } else if(cursor > bottom) {
@@ -71,9 +72,10 @@ YUI().use("node", "overlay", "anim", function(Y){
             overlay.move(offsetLeft, cursor);
             onCursorMove(getWindowCenter());
         };
-        Y.on('gesturemove', scrollHandle);
+        Y.on('resize', scrollHandle);
         Y.on('scroll', scrollHandle);
         Y.on('mousewheel', scrollHandle);
+        Y.on('touchmove', scrollHandle);
         
         onCursorMove(0);
     };
@@ -137,7 +139,7 @@ YUI().use("node", "overlay", "anim", function(Y){
                 node: 'win',
                 easing: 'easeBoth',
                 to: {
-                    scroll: [0, targetPoint - window.get('winHeight')/2]
+                    scroll: [0, targetPoint - win.get('winHeight')/2]
                 }
             });
             anim.run();
