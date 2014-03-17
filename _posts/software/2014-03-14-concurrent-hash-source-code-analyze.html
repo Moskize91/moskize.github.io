@@ -15,7 +15,7 @@ boolean equals(Object o)&nbsp;<br />
 <br />
 如果多个Key对象被映射到同一个偏移地址（哈希表的设计应该尽量避免这种情况，但有必须对这种情况进行必要的处理） ，称之为冲突。Java解决冲突的方法是拉链法。即多个节点通过链表的形式，占用同一个偏移地址。最终结果可能是这个样子。<br />
 
-<img src="concurrent-hash-source-code-analyze-001.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-001.jpg"></img>
 
 <p>当哈希表需要将一个输入的Key对象映射到特定的节点上时，会以如下方式进行映射：</p>
 
@@ -35,7 +35,7 @@ boolean equals(Object o)&nbsp;<br />
 <p>ConcurrentHashMap 对于所有的读操作，都不加锁。它仅仅对写操作加锁。这意味着仅仅写操作是互斥的，而读操作则完全不可预测。</p>
 <p>首先让我们来看看HashMap中的节点，Entry对象。严格的Entry泛型定义应该是Entry<Key,Value>，这样就限制了Key和Value的类型。</p>
 
-<img src="concurrent-hash-source-code-analyze-002.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-002.jpg"></img>
 
 <p>在 ConcurrentHashMap中，写入的Entry通过无比巧妙的方式，保证了随时可能进行的读操作的安全。我将一一介绍它们的具体实现，并配上图片。</p>
 <p>我在配图的时候将用颜色区分不同的节点：</p>
@@ -48,7 +48,7 @@ boolean equals(Object o)&nbsp;<br />
 <p>put方法如果发生在Key已存在的情况下，则仅仅是定位Entry，并将它的Value替换成新的。这种情况下完全不需要加锁，且能保证线程安全。因此，我不打算讨论这种情况。我要讨论的是当put发生在Key不存在的情况下的实现。 </p>
 <p>这种情况下，写入线程首先将找到偏移地址，并遍历整个链表，但发现链表中没有一个Key是可以匹配的，因此线程必须建立一个新的节点。 </p>
 
-<img src="concurrent-hash-source-code-analyze-003.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-003.jpg"></img>
 
 <p>这种技巧的关键在于，在最后一步完成前，写入线程做造成的影响全部都是“红色”的，即外界不可见的。如果你忽视掉“红色”的方块，则会发现绿色的方块在整个过程中都没有发生任何改变。正是这个特征保证了线程的安全。</p>
 
@@ -56,7 +56,7 @@ boolean equals(Object o)&nbsp;<br />
 
 <p>写入线程首先，找到需要删除的节点。再将需要删除的节点所在链表的前趋全部复制一遍，但直接前趋的Next是指向需要删除节点的后继的。最后，将复制的前趋替换掉之前的前趋。</p>
 
-<img src="concurrent-hash-source-code-analyze-004.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-004.jpg"></img>
 
 <p>这种做法等于将待删节点，以及它的前趋的全部前趋都删除掉了（因为变得不可达了），但却为其前趋做了副本，因此真正被删除掉的只有待删节点本身而已。</p>
 <p>注意第三部中蓝色的方块，此时如果有线程正在遍历蓝色的方块，对于这条线程而言完全读到任何差异。线程依然是安全的。蓝色的方块只有当所有的线程都不再依赖的时候才会被垃圾回收期搜集。</p>
@@ -66,18 +66,18 @@ boolean equals(Object o)&nbsp;<br />
 <p>哈希表极力降低冲突的概率，因此当哈希表容纳的Entry过多时，会自动扩容。 哈希的扩容后的容量一定为原来的两倍，因此只要哈希表的初始容量是2的整次幂（实际上就是如此），那么哈希表容量一直是2的整次幂。</p>
 <p>ConcurrentHashMap使用了一种巧妙的方法，令哈希表即便是在扩容期间，也能保证无锁的读。</p>
 
-<img src="concurrent-hash-source-code-analyze-005.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-005.jpg"></img>
 
 <p>第一步将分配新的table，长度为原来的2倍。在遍历原table的每一项，并对链表进行操作（此处将只演示对某一条链表的操作）。首先取出链表最某段的连续的一组节点，此组节点的hashCode在新table中对应的偏移位置（Index）是相同的。 </p>
 
-<img src="concurrent-hash-source-code-analyze-006.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-006.jpg"></img>
 
 <p> 再令新table中对应的偏移地址处指向之前选取组的首节点。</p>
 
-<img src="concurrent-hash-source-code-analyze-007.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-007.jpg"></img>
 
 <p>将该组节点的前趋全部复制，并各自通过哈希函数计算其在新table中的位置，并插入到该位置上。</p>
 
-<img src="concurrent-hash-source-code-analyze-008.jpg"></img>
+<img src="/public/upload/images/concurrent-hash-source-code-analyze-008.jpg"></img>
 
 <p>这一步仅仅改变指向table的指针，导致原来的旧table以及被复制节点的本体变得不可达了。这些节点最终将被垃圾回收器回收。整个扩容过程即便耗时很长，但对于其他线程都是透明的。</p>
