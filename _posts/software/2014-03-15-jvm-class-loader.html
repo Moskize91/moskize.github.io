@@ -44,7 +44,7 @@ JVM的加载机制是很有趣的，以至于我所列出的四项中还出现�
 <p>
 因此，假定有一个类叫做com.tzy.A的类，下列语句是不会触发初始化类操作的：
 
-{% hightlight java codenos %}
+{% highlight java linenos %}
 Object obj = new Object();
 com.tzy.A a = (com.tzy.A) obj;
 Object obj=new Object();
@@ -74,7 +74,7 @@ new com.tzy.B();//先初始化A，再初始化B。
 <p>
 首先，我们知道，单独个class文件的编译过程对于其他class文件是透明的。这意味着其他class文件在编译这个层面上无法印象到该class文件。但是，class文件对其他class文件的依赖关系是客观存在的。例如：
 
-{% hightlight java codenos %}
+{% highlight java linenos %}
 public class A{
 	public someMethod(){
 		com.tzy.B b;
@@ -129,7 +129,7 @@ Class.forName(String className,boolean init,ClassLoader classLoader)
 <p>
 无论装载是显式还是隐式，对于ClassLoader本身而言是一样的，最终会调用到ClassLoader的方法：
 <p>
-{% hightlight java codenos %}
+{% highlight java linenos %}
 protected Class<?> findClass(String className) throws ClassNotFoundException;
 {% endhighlight %}
 <p>
@@ -157,7 +157,7 @@ JVM为每一个ClassLoader实例（注意不是类，是实例）维系了一个
 <p>
 为了描述命名空间为何物，我想举一个例子：
 
-{% hightlight java codenos %}
+{% highlight java linenos %}
 //File:ClassA.java
 
 public ClassA{
@@ -184,7 +184,7 @@ public ClassB{
 <p>
 将这两个文件使用javac编译以后，存储在某一个文件夹中，如d:\test\ab。
 
-{% hightlight java codenos %}
+{% highlight java linenos %}
 //File:MyLoader.java
 
 import java.io.*;
@@ -227,7 +227,7 @@ public class MyLoader extends ClassLoader{
 该文件编译后的class文件保存在CLASSPATH下。
 <p>
 之后，我们在main方法中执行如下代码。
-{% hightlight java codenos %}
+{% highlight java linenos %}
 ClassLoader loader1 = new MyClassLoader();
 ClassLoader loader2 = new MyClassLoader();
 Class classA1 = Class.forName("ClassA",false,loader1);
@@ -258,7 +258,7 @@ false
 只不过如果不涉及ClassLoader的编程，我们自定义的类只会用到一个命名空间，那就是CLASSPATH的命名空间（来源于一个AppClassLoader的实例），因此，一般情况下，我们把Class的名字和实例理解为一对一的关系也没什么大问题。
 <p>
 之后，我们尝试执行以下代码：（编译时记得声明throws Exception）
-{% hightlight java codenos %}
+{% highlight java linenos %}
 	Method getter1 = classA1.getMethod("getClassB",new Class[]{});
 	Object obj = getter1.invoke(null,new Object[]{}};
 	Method setter2 = classA2.getMethod("setClassB",new Class[]{Object.class}};
