@@ -8,6 +8,19 @@
 <link href="../public/css/public.css" rel="stylesheet" type="text/css" />
 <link href="../public/css/comments.css" rel="stylesheet" type="text/css" />
 <link href="../public/css/syntax.css" rel="stylesheet" type="text/css" />
+
+<!-- for fancyBox -->
+<script type="text/javascript" src="../public/lib/jquery-1.10.1.min.js"></script>
+<script type="text/javascript" src="../public/lib/jquery.mousewheel-3.0.6.pack.js"></script>
+<script type="text/javascript" src="../public/source/jquery.fancybox.js?v=2.1.5"></script>
+<link rel="stylesheet" type="text/css" href="../public/source/jquery.fancybox.css?v=2.1.5" media="screen" />
+<link rel="stylesheet" type="text/css" href="../public/source/helpers/jquery.fancybox-buttons.css?v=1.0.5" />
+<script type="text/javascript" src="../public/source/helpers/jquery.fancybox-buttons.js?v=1.0.5"></script>
+<link rel="stylesheet" type="text/css" href="../public/source/helpers/jquery.fancybox-thumbs.css?v=1.0.7" />
+<script type="text/javascript" src="../public/source/helpers/jquery.fancybox-thumbs.js?v=1.0.7"></script>
+<script type="text/javascript" src="../public/source/helpers/jquery.fancybox-media.js?v=1.0.6"></script>
+<!-- end fancyBox -->
+
 </head>
 
 <body>
@@ -29,309 +42,88 @@
 	</div>
 	<div class="center">
 <div id="article" class="buble-container">
-	<div class="declare">本文属转载，点击<a href="#">这里</a>查看原文。</div>
-    <div class="title can-select">JVM类装载机制的解析，以及热更新的探讨</div>
+    
+    <div class="title can-select">源码分析，无锁但线程安全的并发哈希映射（ConcurrentHashMap）</div>
     <div class="content can-select">
-    <h1>引言</h1>
-<p>写这篇文章源自一年前对诸如此类问题的好奇和困惑，当时咨询过其他人，也搜集过一些资料，苦于当时不能立即解惑。之后断断续续过了一年，一直在零星搜集这方面的资料，直到今天，大致搜集圆满了。遂成此文，方便日后我自己查看，也分享给大家。
-<p>
-文章内容其实很多都是我个人推断的结果，虽然有参考一些文献，但这些文献都是零星的，不完整的。（如果有人有完整的，总结性的文献，请发给我，感激不尽。这种文献一定是有的，只是我没找到而已。）用百度的话说，我这是“脑补文”，不是“干货文”。
-<p>
-因此，尽管只有我认为是正确无误的内容我才会写入本文中，但也切勿在未经甄别的情况下引用本文内容。如有错误，请批评指正。
-<p>
-Java是一种动态连接的语言。所谓动态连接，大概可以这么解释。
-<p>
-首先，Java可以大概想象成是编译解释执行的。对于一个*.java的文件，通过javac将会编译成一个*.class文件。而JVM会解释执行*.class文件。但一个软件不可能只有一个class文件，一个项目往往有众多的class文件。这些class存储了足以供JVM执行的字节码，但却只有在连接之后才能执行。
-<p>
-所谓的Java是动态连接的语言，是指class文件并非在编译时连接的，而是在运行时连接的。对于编译器而言，当它编译一个java文件，它就只会编译这个java文件，不同的java文件的编译彼此不会影响。（虽然javac会通过java文件之间的依赖关系搜索并编译其他的与之有依赖的java文件，且在搜索不到的时候报错，但实质上这只是一种主观上的限制罢了。）这也是Java编译器区别于C/C++编译器的地方。
-<p>
-正因为class的连接发生在运行时，因此才需要考虑所谓的加载器，以及令讨论热更新成为可能。
+    ConcurrentHashMap是一个线程安全的哈希实现类，它不但能使多线程同时操作该类时保证线程是安全的，同时为了保证对Map的读操作的高效，完全不使用同步锁。<br />
+实现单线程，或简单通过加锁来实现线程安全的一个哈希表所用到的数据结构知识是很普通的，但如果不加锁，也能保证线程安全，则需要用到一些“奇技淫巧”了。<br />
+编写JDK的程序员正是这么一些掌握了这种“奇技淫巧”的人。，而ConcurrentHashMap类正是运用了这些技巧的一个实现类。本文将用图片的形式，展现这些技巧。毕竟源代码的阅读是枯燥的。<br />
+<br />
+<h1>Java如何实现HashMap</h1>
+Java规定只有对象才能作为哈希表的Key或Value，这意味着基本数据类型只能存它们的封装对象。一切Java对象都继承自Object，而Object有两个与HashMap紧密相关的方法：<br />
+int hashCode()<br />
+boolean equals(Object o)&nbsp;<br />
+<br />
+哈希表通过Key对象的hashCode()获取该Key的哈希索引，再通过哈希函数将索引映射到哈希表的某个偏移地址。哈希索引和它经过哈希函数处理后的结果是一个多对一的关系。即同一个哈希索引只可能映射到唯一一个偏移地址上，但同一个偏移地址可能映射到多个哈希索引。<br />
+<br />
+如果多个Key对象被映射到同一个偏移地址（哈希表的设计应该尽量避免这种情况，但有必须对这种情况进行必要的处理） ，称之为冲突。Java解决冲突的方法是拉链法。即多个节点通过链表的形式，占用同一个偏移地址。最终结果可能是这个样子。<br />
 
-<h1>JVM的类加载机制。</h1>
-<p>
-JVM加载、连接的基本单位为class文件（或称一个类），值得注意的是，加载并非以java文件为单位。虽然大部分情况下一个java文件对应一个class文件，但是当java文件中定义了匿名类、内部类的时候，一个java文件将生成多个class文件。
-<p>
-类是如何加载的呢？
-<p>
-类的加载大致由这么几个步骤组成：
-<ul>
-<li>（1）找到，并加载类的字节码</li>
-<li>（2）解析字节码，并进行安全性检查</li>
-<li>（3）初始化类</li>
-<li>（?）将符号引用转化为实例引用</li>
-</ul>
-<p>
-JVM的加载机制是很有趣的，以至于我所列出的四项中还出现了一个问号（不是我打错字了哦）。我将采用问答的形式引出这里面的玄机。
-<p>
-问：这四个步骤分别在何时发生。
-<p>
-答：除了第三部“初始化类”，其余的步骤均不知道何时发生。因为JVM只对第三步的执行的时机进行了定义，其他的都是未定义的。这意味着其他三步实现的时机依赖于虚拟机的具体实现。
-<p>
-我们不能假定除了“初始化类”的其他步骤发生的时机！
-<p>
-那么“初始化类”何时发生呢？初始化类，在且只能在第一次发生下列事情的任何一个时进行：类的静态成员变量被使用、类的静态方法被调用、类被实例化、类作为启动类需要被调用main(String[])方法、类的子类需要被初始化、反射操作涉及到该类。（应该就是这几个，没有记漏的话）
-<p>
-值得注意的是，强制类型转化判定、获取类的实例（即Class对象），绝对不会触发初始化类事件，实际上在解析字节码，并进行安全性检查这一步骤的结果就是获得一个Class实例。
-<p>
-因此，假定有一个类叫做com.tzy.A的类，下列语句是不会触发初始化类操作的：
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-001.jpg"></img>
 
-<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="n">Object</span> <span class="n">obj</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
-<span class="lineno"> 2</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span> <span class="n">a</span> <span class="o">=</span> <span class="o">(</span><span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
-<span class="lineno"> 3</span> <span class="n">Object</span> <span class="n">obj</span><span class="o">=</span><span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
-<span class="lineno"> 4</span> <span class="c1">//使用反射的方法也不会！</span>
-<span class="lineno"> 5</span> <span class="c1">//可见不是所有的反射方法都会触发初始化类操作。</span>
-<span class="lineno"> 6</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isInstance</span> <span class="n">obj</span><span class="o">);</span>
-<span class="lineno"> 7</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;com.tzy.A&quot;</span><span class="o">);</span>
-<span class="lineno"> 8</span> 
-<span class="lineno"> 9</span> <span class="c1">//而下列语句一定会触发初始化类操作！</span>
-<span class="lineno">10</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">();</span>
-<span class="lineno">11</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">.</span><span class="na">someValue</span> <span class="o">=</span> <span class="mi">5</span><span class="o">;</span>
-<span class="lineno">12</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">.</span><span class="na">someMethod</span><span class="o">(</span><span class="s">&quot;helloworld&quot;</span><span class="o">);</span>
-<span class="lineno">13</span> <span class="nl">cmd:</span><span class="n">Java</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span>
-<span class="lineno">14</span> 
-<span class="lineno">15</span> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span> <span class="kd">extends</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">{</span>
-<span class="lineno">16</span>     <span class="o">......</span>
-<span class="lineno">17</span> <span class="o">}</span>
-<span class="lineno">18</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span><span class="o">();</span><span class="c1">//先初始化A，再初始化B。</span>
-</code></pre></div>
-<p>
-所谓初始化类，指调用类中的static语句块，将所有静态变量赋初值等。在初始化过程中，不论是static语句块，还是静态变量赋初值调用的方法抛出异常，最终都会抛出一个ExceptionIninitalizerError。
-<p>
-那好，现在我们仅仅知道了初始化类发生的时机，但却对其他三个发生的实际一无所知。现实真是这么悲观吗？也不完全是。
-<p>
-我们知道，如果没有加载类的字节码，虚拟机如何解析并生成一个Class实例呢？如果没有一个Class实例，虚拟机如何初始化它呢？显然前三个步骤是递进的，后一个步骤依赖前一个步骤的完成。因此，对于步骤（1）（2），我们知道，最迟在（3）发生之前发生！
-<p>
-那么步骤（？）何时发生呢？要理解步骤（？）何时发生，首先要理解（?）是个什么东西。
-<p>
-首先，我们知道，单独个class文件的编译过程对于其他class文件是透明的。这意味着其他class文件在编译这个层面上无法印象到该class文件。但是，class文件对其他class文件的依赖关系是客观存在的。例如：
+<p>当哈希表需要将一个输入的Key对象映射到特定的节点上时，会以如下方式进行映射：</p>
 
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">A</span><span class="o">{</span>
-<span class="lineno">2</span> 	<span class="kd">public</span> <span class="nf">someMethod</span><span class="o">(){</span>
-<span class="lineno">3</span> 		<span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span> <span class="n">b</span><span class="o">;</span>
-<span class="lineno">4</span> 		<span class="n">b</span> <span class="o">=</span> <span class="o">(</span><span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span><span class="o">)</span><span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
-<span class="lineno">5</span> 	<span class="o">}</span>
-<span class="lineno">6</span> <span class="o">}</span>
-</code></pre></div>
-<p>
-请看这段代码，如果我调用someMethod()方法，一定会抛出强制类型转换异常。为什么呢？因为Object一定不是com.tzy.B的子类？但是JVM如何知道com.tzy.B不是Object的子类呢？
-<p>
-要知道在class文件中，对于com.tzy.B，存起来可能是像这种形式：
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="s">&quot;com.tzy.B&quot;</span>
-</code></pre></div>
-<p>
-对，就只是一个字符串而已。但是它表示一个类，但是在编译阶段无法验证这个字符串表示到底哪一个类，这个工作只有虚拟机能做，编译器是不管的（除了语法上的验证，但我在后面会说明，有时这个语法上的验证是不应该有的）。
-<p>
-字符串的理解，全凭虚拟机解释。虚拟机会将”com.tzy.B”这个字符串转化成一个Class实例。通过Class实例，可以访问到这个类的声明信息，因此，可以判断Object一定不是它的子类，从而抛出强制类型转换异常。
-<p>
-这个过程就叫做将符号引用转化为实例引用。
-<p>
-这个转化过程在何时发生呢？不知道。它一定发生在第二步之后，但既可能发生在第三步之前，也可能发生在第三步之后。
-<p>
-因此，对于我们的一个应用程序，我们可以这么理解，以做个总结。
 <ol>
-<li>1、应用程序由许多class文件构成。</li>
-
-<li>2、每一个class文件一般会依赖其他class文件，它将依赖的其他class的名字保留下来。所谓class文件的名字，一般是诸如com.tzy.Test、java.lang.String等等形式。</li>
-<li>3、对于应用程序而言，有且只有一个启动class文件，它是一个包含public static void main(String[])方法的public类。</li>
-因此，我们可以构造这么一张“图”。我们假定每一个class文件为一个节点。将启动class文件设为根节点。并定义，如果某一个class文件中出现了另外一个class文件的名字，则用一根单向箭头从这个class文件的节点指向另一个class文件节点。最终，我们得到了一张有一个根节点，且能表示class文件之间依赖关系的“图”。</li>
-而从根节点触发，可达的节点集合，则是我们的应用程序会被载入的class文件的最大集合！</li>
-之所以是最大集合，是因为虚拟机的机制尽可能的减少加载如内存的class数量。但，好在我们得到了一个最大值。因此，可以安心的假定，离开这个集合的class绝对不会被载入。</li>
+	<li>通过Key对象的hashCode()方法获取哈希索引。</li>
+	<li>用哈希函数算出索引对应的偏移地址。ava实现的哈希函数很简单，令哈希索引除以数组长度，取余数即为偏移地址。<br/>但Java不是简单的取余，它令数组的长度永远是2的整次幂，并以下列式子计算偏移地址。这种算法等价于取余，但效率更高。
+	    <br/>hashCode & (hashTable.length-1)
+	</li>
+	<li>在数组中查看偏移地址信息，如果为空，则没有找到。否则则找到一条链表。</li>
+	<li>遍历这条链表，对于链表每一个节点记录的Key对象调用equals方法尝试是否与输入的Key对象相等。</li>
+	<li>如果找到，则停止遍历。如果遍历完链表尚未找到，则宣布没有找到。</li>
 </ol>
+<p>由此可见，一切存入HashMap中的Key对象，如果想要重写hashCode与equals方法中的任意一个，则必须两个都配套重写。任何企图只重写其中一个方法，或使两个方法不匹配的，都会令程序产生不可预料的结果。</p>
 
-<h1>类装载器</h1>
-当某个类对其他类存在依赖关系时，这种依赖关系只会以符号引用的形式存在于class文件中。而这种符号引用所代表的类究竟是什么类，取决于虚拟机如何解释。解释的结果，是获取一段二进制的字节码。一般而言，这段二进制的字节码读取自文件，因此，所谓的将符号引用转化为实例引用，就是将类名定位到*.class文件。
-<p>
-Java通过类加载器来实现二进制字节码的获取。
-<p>
-除了极个别特殊的类，Java中绝大部分的类的实例（Class对象），都是通过某个类加载器的实例获取的。类加载器继承自一个抽象类ClassLoader。
-<p>
-我们可以通过实例方法Class.getClassLoader()方法，来得到某个类的加载器。就像一个孩子只能由一个母亲所生一样，一个类实例只能有一个ClassLoader。
-<p>
-ClassLoader的职能在于，通过类名，生成并返回一个Class实例。我们可以通过主动调用Class类的forName方法，指定使用某个ClassLoader载入Class实例。
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="n">String</span> <span class="n">className</span><span class="o">,</span><span class="kt">boolean</span> <span class="n">init</span><span class="o">,</span><span class="n">ClassLoader</span> <span class="n">classLoader</span><span class="o">)</span>
-</code></pre></div>
-<p>
-主动调用这个方法，从而获取Class实例，我个人把这个叫做显式装载。
-<p>
-此外，当虚拟机执行过程中需要获取某个Class实例，手头上却只有该类的符号引用时。虚拟机将隐式的使用类加载器加载这个类，并获取其实例。我把这个叫做隐式装载。
-<p>
-无论装载是显式还是隐式，对于ClassLoader本身而言是一样的，最终会调用到ClassLoader的方法：
-<p>
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="kd">protected</span> <span class="n">Class</span><span class="o">&lt;&amp;</span><span class="n">iexcl</span><span class="o">;&gt;</span> <span class="n">findClass</span><span class="o">(</span><span class="n">String</span> <span class="n">className</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">ClassNotFoundException</span><span class="o">;</span>
-</code></pre></div>
-<p>
-这个方法就是用来重写的。
-<p>
-值得注意的是，隐式装载会使用哪一个ClassLoader呢？经过我的实验，隐式装载所使用的符号引用来自哪一个Class，则使用哪一个Class的ClassLoader。
-<p>
-这种机制就会引发一个有趣的现象。还记得我之前说的“图”吗？当使用某一个ClassLoader载入某一个根class节点后，该class将逐步的、递归的、隐式的加载各种各样的class文件。而由此派生出来的Class对象，全部都是由最初的ClassLoader载入的。
-<p>
-此外，不得不说的是，ClassLoader有两个重要的特征。其一是父节点委派机制，其二是符号引用隔离机制。（我自己取的名字，如果找到正确的名字请告诉我。）
-<p>
-其一、父节点委派机制
-<p>
-任何一个ClassLoader实例都可以看做家族树上的一个节点。这意味着你可以给ClassLoader分配一个父亲节点（父亲节点同样是ClassLoader），实际上，不管你愿不愿意，用户自定义的ClassLoader一定会分配一个父亲节点的！
-<p>
-当使用某一个ClassLoader装载一个Class时（不论显式还是隐式），该ClassLoader一定会首先使用用它的父节点装载该Class。如果它的父节点能够装载，则直接返回，此时就没自己什么事了。只有当其父节点抛出ClassNotFoundException时，才调用自己的findClass方法装载。
-<p>
-这就是父节点委派机制。注意，当子节点将装载任务委派给父节点时，父节点同样要遵循父节点委派机制，这样父节点首先还要将加载任务委派给它的父节点。这样变成了一个层层递归委派的过程。
-<p>
-于是，处于家族树最顶端的ClassLoader拥有最高优先权。只有上端ClassLoader宣布它不能载入的Class，下端才能捡漏将其载入。因此，子节点休想越俎代庖，做了本该它父亲该做的事情。
-<p>
-其二、符号引用隔离机制
-<p>
-JVM为每一个ClassLoader实例（注意不是类，是实例）维系了一个个彼此独立的命名空间。这种命名空间仅在虚拟机上表现，在语言层面无法表现。因此，在编写Java程序时，常常无法感受到命名空间的存在。
-<p>
-为了描述命名空间为何物，我想举一个例子：
+<h1>ConcurrentHashMap的实现</h1>
+<p>但凡单线程的哈希表实现都是很简单的，其知识无外乎《数据结构》中那些要领。但要实现无锁的线程安全的哈希表，则需要一些“巧力”了。让我们看看JDK的程序员是如何做的吧。</p>
+<p>ConcurrentHashMap 对于所有的读操作，都不加锁。它仅仅对写操作加锁。这意味着仅仅写操作是互斥的，而读操作则完全不可预测。</p>
+<p>首先让我们来看看HashMap中的节点，Entry对象。严格的Entry泛型定义应该是Entry<Key,Value>，这样就限制了Key和Value的类型。</p>
 
-<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="c1">//File:ClassA.java</span>
-<span class="lineno"> 2</span> 
-<span class="lineno"> 3</span> <span class="kd">public</span> <span class="n">ClassA</span><span class="o">{</span>
-<span class="lineno"> 4</span> 
-<span class="lineno"> 5</span> 	<span class="kd">private</span> <span class="kd">static</span> <span class="n">ClassB</span> <span class="n">classB</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassB</span><span class="o">();</span>
-<span class="lineno"> 6</span> 
-<span class="lineno"> 7</span> 	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">setClassB</span><span class="o">(</span><span class="n">Object</span> <span class="n">obj</span><span class="o">){</span>
-<span class="lineno"> 8</span> 		<span class="n">classB</span> <span class="o">=</span> <span class="o">(</span><span class="n">ClassB</span><span class="o">)</span><span class="n">obj</span><span class="o">;</span>
-<span class="lineno"> 9</span> 	<span class="o">}</span>
-<span class="lineno">10</span> 
-<span class="lineno">11</span> 	<span class="kd">public</span> <span class="n">Object</span> <span class="nf">getClassB</span><span class="o">(){</span>
-<span class="lineno">12</span> 		<span class="k">return</span> <span class="n">classB</span><span class="o">;</span>
-<span class="lineno">13</span> 	<span class="o">}</span>
-<span class="lineno">14</span> <span class="o">}</span>
-<span class="lineno">15</span> 
-<span class="lineno">16</span> <span class="c1">//File:ClassB.java</span>
-<span class="lineno">17</span> <span class="kd">public</span> <span class="n">ClassB</span><span class="o">{</span>
-<span class="lineno">18</span> 	<span class="nd">@Override</span>
-<span class="lineno">19</span> 	<span class="kd">public</span> <span class="n">String</span> <span class="nf">toString</span><span class="o">(){</span>
-<span class="lineno">20</span> 		<span class="k">return</span> <span class="s">&quot;className:ClassB&quot;</span><span class="o">;</span>
-<span class="lineno">21</span> 	<span class="o">}</span>
-<span class="lineno">22</span> <span class="o">}</span>
-</code></pre></div>
-<p>
-将这两个文件使用javac编译以后，存储在某一个文件夹中，如d:\test\ab。
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-002.jpg"></img>
 
-<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="c1">//File:MyLoader.java</span>
-<span class="lineno"> 2</span> 
-<span class="lineno"> 3</span> <span class="kn">import</span> <span class="nn">java.io.*</span><span class="o">;</span>
-<span class="lineno"> 4</span> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyLoader</span> <span class="kd">extends</span> <span class="n">ClassLoader</span><span class="o">{</span>
-<span class="lineno"> 5</span> 
-<span class="lineno"> 6</span> 	<span class="nd">@Override</span>
-<span class="lineno"> 7</span> 	<span class="kd">public</span> <span class="n">Class</span> <span class="nf">findClass</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">ClassNotFoundException</span><span class="o">{</span>
-<span class="lineno"> 8</span> 		<span class="n">String</span> <span class="n">className</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
-<span class="lineno"> 9</span> 		<span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="sc">&#39;.&#39;</span><span class="o">,</span><span class="sc">&#39;\\&#39;</span><span class="o">)+</span><span class="s">&quot;.class&quot;</span><span class="o">;</span>
-<span class="lineno">10</span> 		<span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;D:\\test\\ab&quot;</span><span class="o">,</span><span class="n">name</span><span class="o">);</span>
-<span class="lineno">11</span> 		<span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span><span class="n">file</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
-<span class="lineno">12</span> 		<span class="kt">byte</span><span class="o">[]</span> <span class="n">bf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">length</span><span class="o">];</span>
-<span class="lineno">13</span> 		<span class="n">InputStream</span> <span class="n">is</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-<span class="lineno">14</span> 		<span class="k">try</span><span class="o">{</span>
-<span class="lineno">15</span> 			<span class="n">is</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
-<span class="lineno">16</span> 			<span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-<span class="lineno">17</span> 			<span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">length</span><span class="o">;</span>
-<span class="lineno">18</span> 			<span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
-<span class="lineno">19</span> 				<span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">is</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">bf</span><span class="o">,</span><span class="n">start</span><span class="o">,</span><span class="n">length</span><span class="o">);</span>
-<span class="lineno">20</span> 				<span class="n">length</span><span class="o">-=</span><span class="n">i</span><span class="o">;</span>
-<span class="lineno">21</span> 				<span class="n">start</span><span class="o">+=</span><span class="n">i</span><span class="o">;</span>
-<span class="lineno">22</span> 				<span class="k">if</span><span class="o">(</span><span class="mi">0</span><span class="o">==</span><span class="n">i</span> <span class="o">|</span> <span class="o">-</span><span class="mi">1</span><span class="o">==</span><span class="n">i</span><span class="o">){</span>
-<span class="lineno">23</span> 					<span class="k">break</span><span class="o">;</span>
-<span class="lineno">24</span> 				<span class="o">}</span>
-<span class="lineno">25</span> 			<span class="o">}</span>
-<span class="lineno">26</span> 		<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-<span class="lineno">27</span> 			<span class="k">throw</span> <span class="k">new</span> <span class="nf">ClassNotFoundException</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-<span class="lineno">28</span> 		<span class="o">}</span><span class="k">finally</span><span class="o">{</span>
-<span class="lineno">29</span> 			<span class="k">try</span><span class="o">{</span>
-<span class="lineno">30</span> 				<span class="n">is</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
-<span class="lineno">31</span> 			<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-<span class="lineno">32</span> 				<span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-<span class="lineno">33</span> 			<span class="o">}</span>
-<span class="lineno">34</span> 		<span class="o">}</span>
-<span class="lineno">35</span> 		<span class="k">return</span> <span class="nf">defineClass</span><span class="o">(</span><span class="n">className</span><span class="o">,</span> <span class="n">bf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">bf</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
-<span class="lineno">36</span> 	<span class="o">}</span>
-<span class="lineno">37</span> <span class="o">}</span>
-</code></pre></div>
-<p>
-该文件编译后的class文件保存在CLASSPATH下。
-<p>
-之后，我们在main方法中执行如下代码。
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="n">ClassLoader</span> <span class="n">loader1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClassLoader</span><span class="o">();</span>
-<span class="lineno">2</span> <span class="n">ClassLoader</span> <span class="n">loader2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClassLoader</span><span class="o">();</span>
-<span class="lineno">3</span> <span class="n">Class</span> <span class="n">classA1</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;ClassA&quot;</span><span class="o">,</span><span class="kc">false</span><span class="o">,</span><span class="n">loader1</span><span class="o">);</span>
-<span class="lineno">4</span> <span class="n">Class</span> <span class="n">classA2</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;ClassA&quot;</span><span class="o">,</span><span class="kc">false</span><span class="o">,</span><span class="n">loader2</span><span class="o">);</span>
-</code></pre></div>
-<p>
-在这里，我确保d:\test\ab不会被classpath访问到，因此，我们自定义的MyLoader将主动装载ClassA类，并为之生成Class实例。但现在我构造了两个MyClassLoader的实例，但分别载入一次名为”classA”的类，将其返回值赋给了classA1和classA2变量。
-<p>
-那么，问题是，下列语句将输出什么呢？
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">classA1</span><span class="o">==</span><span class="n">classA2</span><span class="o">);</span>
-<span class="lineno">2</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">classA1</span><span class="o">.</span><span class="na">equels</span><span class="o">(</span><span class="n">classA2</span><span class="o">));</span>
-</code></pre></div>
-<p>
-输出结果是：
-<p>
-false
-<p>
-false
-<p>
-这就是类的命名空间机制。JVM为每一个ClassLoader实例（无关他们是否属于同一个ClassLoader的实现类）维系一个命名空间。对于某一个类名，例如”ClassA”，它对应的Class实例到底是哪一个，取决于在哪个命名空间找！
-因此，严格来说，类名和类实例是一对多的关系。
-<p>
-当我对虚拟机说，给我找名叫ClassA的类，那么这是一句错误的话，因为在不告诉虚拟机限制在哪个命名空间的前提下，怎么又能唯一确定Class类的实例呢？
-<p>
-上面的例子很明显，我在同一个虚拟机中，构造了两个同名的Class实例。他们彼此不相等！
-<p>
-只不过如果不涉及ClassLoader的编程，我们自定义的类只会用到一个命名空间，那就是CLASSPATH的命名空间（来源于一个AppClassLoader的实例），因此，一般情况下，我们把Class的名字和实例理解为一对一的关系也没什么大问题。
-<p>
-之后，我们尝试执行以下代码：（编译时记得声明throws Exception）
-<div class="highlight"><pre><code class="java"><span class="lineno">1</span> 	<span class="n">Method</span> <span class="n">getter1</span> <span class="o">=</span> <span class="n">classA1</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&quot;getClassB&quot;</span><span class="o">,</span><span class="k">new</span> <span class="n">Class</span><span class="o">[]{});</span>
-<span class="lineno">2</span> 	<span class="n">Object</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">getter1</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span><span class="k">new</span> <span class="n">Object</span><span class="o">[]{}};</span>
-<span class="lineno">3</span> 	<span class="n">Method</span> <span class="n">setter2</span> <span class="o">=</span> <span class="n">classA2</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&quot;setClassB&quot;</span><span class="o">,</span><span class="k">new</span> <span class="n">Class</span><span class="o">[]{</span><span class="n">Object</span><span class="o">.</span><span class="na">class</span><span class="o">}};</span>
-<span class="lineno">4</span> 	<span class="k">try</span><span class="o">{</span>
-<span class="lineno">5</span> 		<span class="n">setter2</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span><span class="k">new</span> <span class="n">Object</span><span class="o">[]{</span><span class="n">obj</span><span class="o">});</span>
-<span class="lineno">6</span> 	<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">InvocationTargetException</span> <span class="n">e</span><span class="o">){</span>
-<span class="lineno">7</span> 		<span class="n">e</span><span class="o">.</span><span class="na">getTargetException</span><span class="o">().</span><span class="na">printStackTrace</span><span class="o">();</span>
-<span class="lineno">8</span> 	<span class="o">}</span>
-</code></pre></div>
-<p>
-这段代码的意思是，使用反射，从第一个ClassA的实例利用静态方法getClassB()获取ClassB的实例，并使用第二个ClassA的静态方法setClassB(ClassB)将获取的实例赋值。
-<p>
-之所以用反射，是因为在CLASSPATH的命名空间中是无法访问到MyClassLoader创造的命名空间的。可见反射可以跨越命名空间。
-<p>
-其中注意InvocationTargetException 这个异常，它由invoke抛出，用以封装该方法底层抛出的异常。也就是说，当调用Method.invoke时，假如被调用的方法抛出一个NulPointerException，那么invoke方法对应的抛出一个InvocationTargetException ，然后当调用InvocationTargetException.getTargetException()时，将得到NulPointerException。
-<p>
-这里有两个变量，声明都是ClassB classB，此时将一个命名空间中的classB，赋值另外一个命名空间的classB。两者名字都叫ClassB，字节码也完全一样。这种操作可行吗？
-<p>
-这段代码运行的结果是：抛出ClassCastException。
-<p>
-因为虚拟机根本就没有把两个ClassB当做同一种类型，因此彼此根本无法转换。这也是命名空间的妙用，不同的命名空间构造出两个彼此独立的空间，不但允许两个空间自由使用类名而不用担心重名，而且也不用担心重名类彼此转化而引发混乱。
-<p>
-此外，我虽然没有显示地告诉虚拟机，两个ClassB应该分列不同的命名空间，但是虚拟机确实这么做了。那是因为当我们显示地告诉虚拟机用两个ClassLoader分别载入ClassA时后，两个ClassA在将符号引用转化为实例引用时，隐式的分别使用了两个ClassLoader载入ClassB，从而使ClassB也分别属于两个不同的命名空间。
-<p>
-<h1>父节点委派 + 符号引用隔离 = 命名空间的共享</h1>
-<p>
-父节点委派机制的结果，就是，同一个父节点的命名空间，会且只会被它的所有子节点共享。而子节点的命名空间，对父节点而言是透明的。
-<p>
-这便是JVM的命名空间共享机制。
-<p>
-这个结论源自这么几个推论。当子节点ClassLoader试图翻译某个能被其父节点装载的类名时，这个装载工作在“父节点委派机制”的影响下，一定会被父节点夺走。子节点根本得不到装载的机会，自然不会将该类名添加自自己的命名空间。因此，子节点使用的是父节点命名空间中的类实例。这一条对于所有的子节点都成立。
-<p>
-而父节点一定访问不到子节点命名空间中的类，这可以用反证法得到。因为如果父节点能访问到，那么根据“父节点委派机制”，父节点会夺走所有子节点的这部分工作，最终该类应该属于父节点的命名空间，而不是某个子节点的。
-<p>
-Java提供了三个ClassLoader，它们分别是：Bootstrap、Extension、System（或App）。
-<p>
-其中，Bootstrap是老大，它是一切ClassLoader的父亲节点。当你宣布你的ClassLoader，的父亲节点为null时，那么你的ClassLoader将主动以Bottstrap为父亲节点。它也是Java中唯一一个不是ClassLoader类实例的加载器。当你试图得到Bootstrap时，得到的是null。
-<p>
-如果说Bootstrap的本尊是null的话，那么JVM启动过程就是无极生太极、太极生两仪、两仪生四象、四象生八卦、八卦生万物的过程。
-<p>
-Bootstrap载入%JAVAHOME%\jre\rt.jar 中的类。这里面几乎包含了Java标准库80%的类。
-<p>
-由于Bootstrap是铁打的老大，一切ClassLoader的祖宗，因此，根据“父节点委派机制”，它拥有至高无上的裁决权。因此，任何一个命名空间，一定可以访问到Bootstrap的命名空间，也就是可以访问Java标准库中80%的内容。
-<p>
-同样，假如有一名黑客想要制造一种侵入JVM的病毒，通过在应用程序的命名空间之外加一个病毒加载器，这个病毒加载器替换很多Java标准类库，以达到入侵的目的。这时，这名黑客会发现它的病毒加载器必须以Bootstrap作为父节点，而Bootstrap将粗暴的打断一切病毒加载器企图入侵的行为。
-<p>
-Extension加载器是Bootstrap的子节点。它将载入Java标准库剩余20%的内容。我看了下，有NIO、XML的处理类。是Bootstrap的子节点意味着Extension是可以被替换的，安全性远没有Bootstrap那么高。我个人认为这个加载器没什么好说的。
-<p>
-System加载器又叫做应用加载器，它负责从CLASSPATH路径中加载类，也是Extension的子节点。因为“父节点委派机制”的存在，即便Java标准类库没有出现在CLASSPATH中，应用程序也可以访问到它们。
-<p>
-另外，System加载器也是void main(String[])所在类的加载器。这意味着，除了Java的标准库，应用程序中所有的自定义类全部都是System加载器加载的（不使用显示加载的话）。
+<p>在 ConcurrentHashMap中，写入的Entry通过无比巧妙的方式，保证了随时可能进行的读操作的安全。我将一一介绍它们的具体实现，并配上图片。</p>
+<p>我在配图的时候将用颜色区分不同的节点：</p>
+
+<p><span style="color:#00B050;">绿色</span>：一切线程都可以看到的对象，因此这些对象必须假定它随时都被访问。</p>
+<p><span style="color:#FF0000;">红色</span>：写入线程独占的对象，只有写入线程可见，对于其他任何线程都是透明的。（由于写入线程持有了锁，因此实际上只有一个线程可以访问到这些对象。）</p>
+<p><span style="color:#4BACC6;">蓝色</span>：即将回收的对象。这些对象可能可见，但是很快随着方法的返回，这些对象将最终变得不可达，而被垃圾回收期搜集处理掉。</p>
+
+<h2>(1)put方法</h2>
+<p>put方法如果发生在Key已存在的情况下，则仅仅是定位Entry，并将它的Value替换成新的。这种情况下完全不需要加锁，且能保证线程安全。因此，我不打算讨论这种情况。我要讨论的是当put发生在Key不存在的情况下的实现。 </p>
+<p>这种情况下，写入线程首先将找到偏移地址，并遍历整个链表，但发现链表中没有一个Key是可以匹配的，因此线程必须建立一个新的节点。 </p>
+
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-003.jpg"></img>
+
+<p>这种技巧的关键在于，在最后一步完成前，写入线程做造成的影响全部都是“红色”的，即外界不可见的。如果你忽视掉“红色”的方块，则会发现绿色的方块在整个过程中都没有发生任何改变。正是这个特征保证了线程的安全。</p>
+
+<h2>(2)remove方法</h2>
+
+<p>写入线程首先，找到需要删除的节点。再将需要删除的节点所在链表的前趋全部复制一遍，但直接前趋的Next是指向需要删除节点的后继的。最后，将复制的前趋替换掉之前的前趋。</p>
+
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-004.jpg"></img>
+
+<p>这种做法等于将待删节点，以及它的前趋的全部前趋都删除掉了（因为变得不可达了），但却为其前趋做了副本，因此真正被删除掉的只有待删节点本身而已。</p>
+<p>注意第三部中蓝色的方块，此时如果有线程正在遍历蓝色的方块，对于这条线程而言完全读到任何差异。线程依然是安全的。蓝色的方块只有当所有的线程都不再依赖的时候才会被垃圾回收期搜集。</p>
+
+<h3>(3)哈希扩容</h3>
+
+<p>哈希表极力降低冲突的概率，因此当哈希表容纳的Entry过多时，会自动扩容。 哈希的扩容后的容量一定为原来的两倍，因此只要哈希表的初始容量是2的整次幂（实际上就是如此），那么哈希表容量一直是2的整次幂。</p>
+<p>ConcurrentHashMap使用了一种巧妙的方法，令哈希表即便是在扩容期间，也能保证无锁的读。</p>
+
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-005.jpg"></img>
+
+<p>第一步将分配新的table，长度为原来的2倍。在遍历原table的每一项，并对链表进行操作（此处将只演示对某一条链表的操作）。首先取出链表最某段的连续的一组节点，此组节点的hashCode在新table中对应的偏移位置（Index）是相同的。 </p>
+
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-006.jpg"></img>
+
+<p> 再令新table中对应的偏移地址处指向之前选取组的首节点。</p>
+
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-007.jpg"></img>
+
+<p>将该组节点的前趋全部复制，并各自通过哈希函数计算其在新table中的位置，并插入到该位置上。</p>
+
+<img src="http://taozeyu.com/public/upload/images/concurrent-hash-source-code-analyze-008.jpg"></img>
+
+<p>这一步仅仅改变指向table的指针，导致原来的旧table以及被复制节点的本体变得不可达了。这些节点最终将被垃圾回收器回收。整个扩容过程即便耗时很长，但对于其他线程都是透明的。</p>
 
     </div>
 </div>
@@ -340,26 +132,24 @@ System加载器又叫做应用加载器，它负责从CLASSPATH路径中加载�
       <h4>文章索引</h4>
     </div>
 </div>
-
 <div style="clear:both;"></div>
-
 <div id="comments">
 <!-- Duoshuo Comment BEGIN -->
-<div class="ds-thread" id="ds-thread"><div id="ds-reset"><div class="ds-meta"><a href="javascript:void(0)" class="ds-like-thread-button ds-rounded ds-thread-liked"><span class="ds-icon ds-icon-heart"></span> <span class="ds-thread-like-text">已喜欢</span><span class="ds-thread-cancel-like">取消喜欢</span></a><span class="ds-like-panel"><span class="ds-highlight">1</span> 人喜欢</span></div><div class="ds-comments-info"><div class="ds-sort"><a class="ds-order-desc ds-current">最新</a><a class="ds-order-asc">最早</a><a class="ds-order-hot">最热</a></div><ul class="ds-comments-tabs"><li class="ds-tab"><a class="ds-comments-tab-duoshuo ds-current" href="javascript:void(0);"><span class="ds-highlight">2</span>条评论</a></li></ul></div><ul class="ds-comments"><li class="ds-post" data-post-id="1204432524856524802"><div class="ds-post-self" data-post-id="1204432524856524802" data-thread-id="1204432524856524801" data-root-id="0" data-source="duoshuo"><div class="ds-avatar" data-user-id="5849386"><a rel="nofollow author" target="_blank" href="http://weibo.com/2794966252" onclick="this.href='http://taozeyu.duoshuo.com/user-url/?user_id=5849386';" title="MOskize"><img src="http://tp1.sinaimg.cn/2794966252/50/0/1" alt="MOskize"></a></div><div class="ds-comment-body"><div class="ds-comment-header"><a class="ds-user-name ds-highlight" data-qqt-account="" href="http://weibo.com/2794966252" onclick="this.href='http://taozeyu.duoshuo.com/user-url/?user_id=5849386';" rel="nofollow" target="_blank" data-user-id="5849386">MOskize</a></div><p>我来测试一下吧！</p><div class="ds-comment-footer ds-comment-actions"><span class="ds-time" datetime="2014-03-18T11:04:14+08:00" title="2014年3月18日 上午11:04:14">3小时前</span><a class="ds-post-reply" href="javascript:void(0);"><span class="ds-icon ds-icon-reply"></span>回复</a><a class="ds-post-likes" href="javascript:void(0);"><span class="ds-icon ds-icon-like"></span>顶</a><a class="ds-post-repost" href="javascript:void(0);"><span class="ds-icon ds-icon-share"></span>转发</a><a class="ds-post-report" href="javascript:void(0);"><span class="ds-icon ds-icon-report"></span>举报</a><a class="ds-post-delete" href="javascript:void(0);"><span class="ds-icon ds-icon-delete"></span>删除</a></div></div></div></li><li class="ds-post" data-post-id="1204432524856524801"><div class="ds-post-self" data-post-id="1204432524856524801" data-thread-id="1204432524856524801" data-root-id="0" data-source="duoshuo"><div class="ds-avatar" data-user-id="5849386"><a rel="nofollow author" target="_blank" href="http://weibo.com/2794966252" onclick="this.href='http://taozeyu.duoshuo.com/user-url/?user_id=5849386';" title="MOskize"><img src="http://tp1.sinaimg.cn/2794966252/50/0/1" alt="MOskize"></a></div><div class="ds-comment-body"><div class="ds-comment-header"><a class="ds-user-name ds-highlight" data-qqt-account="" href="http://weibo.com/2794966252" onclick="this.href='http://taozeyu.duoshuo.com/user-url/?user_id=5849386';" rel="nofollow" target="_blank" data-user-id="5849386">MOskize</a></div><p>haha</p><div class="ds-comment-footer ds-comment-actions"><span class="ds-time" datetime="2014-03-18T01:11:33+08:00" title="2014年3月18日 上午1:11:33">13小时前</span><a class="ds-post-reply" href="javascript:void(0);"><span class="ds-icon ds-icon-reply"></span>回复</a><a class="ds-post-likes" href="javascript:void(0);"><span class="ds-icon ds-icon-like"></span>顶</a><a class="ds-post-repost" href="javascript:void(0);"><span class="ds-icon ds-icon-share"></span>转发</a><a class="ds-post-report" href="javascript:void(0);"><span class="ds-icon ds-icon-report"></span>举报</a><a class="ds-post-delete" href="javascript:void(0);"><span class="ds-icon ds-icon-delete"></span>删除</a></div></div></div></li></ul><div class="ds-paginator" style="display: none;"><div class="ds-border"></div><a data-page="1" href="javascript:void(0);" class="ds-current">1</a></div><a name="respond"></a><div class="ds-toolbar"><div class="ds-account-control"><span class="ds-icon ds-icon-settings"></span> <span>帐号管理</span><ul><li><a class="ds-bind-more" href="javascript:void(0);" style="border-top: none">绑定更多</a></li><li><a target="_blank" href="http://duoshuo.com/settings/">设置</a></li><li><a rel="nofollow" href="http://taozeyu.duoshuo.com/logout/" style="border-bottom: none">登出</a></li></ul></div><div class="ds-visitor"><a class="ds-visitor-name" href="http://weibo.com/2794966252" target="_blank">MOskize</a><a class="ds-unread-comments-count" href="javascript:void(0);" title="你没有新回复" style="display: none;">0</a></div></div><div class="ds-replybox"><a class="ds-avatar" href="http://duoshuo.com/settings/avatar/" target="_blank" title="设置头像"><img src="http://tp1.sinaimg.cn/2794966252/50/0/1" alt="MOskize"></a><form method="post"><input type="hidden" name="thread_id" value="1204432524856524801">
-<input type="hidden" name="parent_id" value="">
-<input type="hidden" name="nonce" value="5327e47277c04"><div class="ds-textarea-wrapper ds-rounded-top"><textarea name="message" title="Ctrl+Enter快捷提交" placeholder="说点什么吧…"></textarea><pre class="ds-hidden-text"></pre></div><div class="ds-post-toolbar"><div class="ds-post-options ds-gradient-bg"><span class="ds-sync"><input id="ds-sync-checkbox" type="checkbox" name="repost" value=""> <label for="ds-sync-checkbox">分享到:</label><a href="javascript:void(0)" class="ds-service-icon-grey ds-weibo" data-service="weibo" title="新浪微博"></a><a href="javascript:void(0)" class="ds-service-icon-grey ds-qqt" data-service="qqt" title="腾讯微博"></a><a href="javascript:void(0)" class="ds-service-icon-grey ds-qzone" data-service="qzone" title="QQ空间"></a></span></div><button class="ds-post-button" type="submit">发布</button><div class="ds-toolbar-buttons"><a class="ds-toolbar-button ds-add-emote" title="插入表情"></a></div></div></form></div><p class="ds-powered-by"><a href="http://duoshuo.com" target="_blank" rel="nofollow">MOsky的博客正在使用多说</a></p></div></div>
-<script type="text/javascript">
-var duoshuoQuery = {short_name:"taozeyu"};
-(function() {
-	var ds = document.createElement('script');
-	ds.type = 'text/javascript';ds.async = true;
-	ds.src = 'http://static.duoshuo.com/embed.js';
-	ds.charset = 'UTF-8';
-	(document.getElementsByTagName('head')[0] 
-	|| document.getElementsByTagName('body')[0]).appendChild(ds);
-})();
-</script>
+	<div class="ds-thread"></div>
+    <script type="text/javascript">
+        var duoshuoQuery = {short_name:"taozeyu"};
+        (function() {
+            var ds = document.createElement('script');
+            ds.type = 'text/javascript';ds.async = true;
+            ds.src = 'http://static.duoshuo.com/embed.js';
+            ds.charset = 'UTF-8';
+            (document.getElementsByTagName('head')[0] 
+            || document.getElementsByTagName('body')[0]).appendChild(ds);
+        })();
+    </script>
 </div>
+<!-- Duoshuo Comment END -->
+
 	</div>
 	<div class="footer">
 		<div class="center">

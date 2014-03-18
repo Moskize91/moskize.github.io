@@ -63,11 +63,7 @@ YUI().use("node", "overlay", "anim", function(Y){
         var title = Y.one('#article-index h4');
         
         var top = index.get('offsetTop');
-        var bottom = article.get('offsetTop') + article.get('offsetHeight') - index.get('offsetHeight');
         
-        if(bottom < top) {
-            bottom = top;
-        }
         var offsetLeft = index.get('offsetLeft');
         var overlay = new Y.Overlay({
             srcNode : index,
@@ -76,6 +72,10 @@ YUI().use("node", "overlay", "anim", function(Y){
         overlay.move(offsetLeft, top);
         
         var scrollHandle = function(){
+            var bottom = article.get('offsetTop') + article.get('offsetHeight') - index.get('offsetHeight');
+            if(bottom < top) {
+                bottom = top;
+            }
             var cursor = win.get('scrollTop');
             var needFix = false;
             if(cursor < top) {
@@ -110,7 +110,7 @@ YUI().use("node", "overlay", "anim", function(Y){
         var index = 0;
         for(var i=0; i<articleNodes.length; ++i) {
             var node = articleNodes[i];
-            if(node.top > cursor) {
+            if(node.top() > cursor) {
                 break;
             }
             index = i;
@@ -125,14 +125,22 @@ YUI().use("node", "overlay", "anim", function(Y){
         lastChoosedIndex = index;
     };
     
+    var addLocationFunction = function(node, firstOne, lastOne) {
+        node.top = function(){
+            return firstOne.get('offsetTop');
+        };
+        node.bottom = function() {
+            return lastOne.get('offsetTop') + lastOne.get('offsetHeight');
+        };
+    };    
+    
     var parseChildren = function() {
         var index = Y.one("#article-index");
         for(var i=0; i<articleNodes.length; ++i) {
             var node = articleNodes[i];
             var firstOne = node.content[0];
             var lastOne = node.content[node.content.length - 1];
-            node.top = firstOne.get('offsetTop');
-            node.bottom = lastOne.get('offsetTop') + lastOne.get('offsetHeight');
+            addLocationFunction(node, firstOne, lastOne);
             var title;
             if(node.head) {
                 title = node.head.get('innerHTML');
@@ -147,8 +155,8 @@ YUI().use("node", "overlay", "anim", function(Y){
     };
     
     var getTargetPoint = function(node) {
-        var top = node.top;
-        var center = node.top + (node.bottom - node.top) / 2;
+        var top = node.top();
+        var center = top + (node.bottom() - top) / 2;
         var targetPoint = top + 160;
         if(targetPoint > center) {
             targetPoint = center;
@@ -178,6 +186,32 @@ YUI().use("node", "overlay", "anim", function(Y){
         parseChildren();
     };
     
+    var initFancyBox = function() {
+        Y.one("#article").all("img").each(function(img){
+            var src = img.get('src');
+            var alt = img.get('alt');
+            var html = '<a class="fancybox-images" href="'+src+'" title="'+alt+'"><img src="'+src+'" alt="'+alt+'"></img></a>';
+            img.insert(html, 'after');
+            img.remove();
+        });
+        $('.fancybox-images').fancybox({
+            prevEffect : 'none',
+            nextEffect : 'none',
+
+            closeBtn  : true,
+            arrows    : true,
+            nextClick : true,
+
+            helpers : {
+                thumbs : {
+                    width  : 50,
+                    height : 50
+                }
+            }
+        });
+    };
+    
     parseArticle();
     initScrollEvents();
+    initFancyBox();
 });
