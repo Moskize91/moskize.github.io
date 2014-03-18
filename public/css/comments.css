@@ -5,12 +5,20 @@
 #comments div {
 	text-shadow: rgba(0, 0, 0, 0.498039) 0px 1px 3px;
 }
+#comments .ds-highlight {
+	color: #FFCC00;
+	text-shadow:0px 0px 3px #FF0000;
+}
 #comments #ds-thread #ds-reset .ds-meta {
 	background-color: #444444;
-	padding: 17px;
 	margin-left: 10px;
 	box-shadow: 0 3px 10px rgba(0,0,0,.1);
-	-moz-border-radius:1em; -webkit-border-radius:1em; border-radius:1em;
+
+	-moz-border-radius:1em; -webkit-border-radius:1em; 	border-radius:1em;
+	width: 350px;
+	text-align: center;
+	padding-top: 35px;
+	padding-bottom: 35px;
 }
 #comments #ds-thread .ds-like-thread-button{
 	-moz-border-radius:10px; -webkit-border-radius:10px;
@@ -31,6 +39,41 @@
 #comments #ds-thread .ds-thread-like-text:before {
 	content : url(http://taozeyu.com/public/icon/icon-like.png);
 }
-#comments #ds-thread .ds-thread-cancel-liket:before {
+#comments #ds-thread .ds-thread-cancel-like:before {
 	content : url(http://taozeyu.com/public/icon/icon-unlike.png);
+}
+#comments #ds-thread .ds-like-panel {
+	padding-left: 12px;
+	color: #FFFFFF;
+}
+#comments #ds-thread .ds-sort {
+	font-size: 13px;
+	float: right;
+	padding-right: 125px;
+}
+
+#comments #ds-thread .ds-sort a {
+	margin-left: 15px;
+	padding: 12px;
+}
+
+#comments #ds-thread .ds-sort .ds-current {
+	box-shadow: inset 0 1px 3px rgba(0,0,0,.3), 0 1px 1px rgba(255,255,255,.5);
+	-moz-border-radius:1em; -webkit-border-radius:1em; border-radius:1em;
+	background-color: #444444;
+	color: #FFCC14;
+}
+#comments #ds-thread .ds-comments-info {
+	height: 45px;
+	border-top-width: 2px;
+	border-right-width: 2px;
+	border-bottom-width: 2px;
+	border-left-width: 2px;
+	border-bottom-style: groove;
+	border-top-color: #444444;
+	border-right-color: #444444;
+	border-bottom-color: #444444;
+	border-left-color: #444444;
+	margin-bottom: 25px;
+	margin-top: 25px;
 }
