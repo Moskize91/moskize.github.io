@@ -20,7 +20,7 @@
 	padding-top: 35px;
 	padding-bottom: 35px;
 }
-#comments #ds-thread .ds-like-thread-button{
+#comments #ds-thread #ds-reset .ds-meta .ds-like-thread-button{
 	-moz-border-radius:10px; -webkit-border-radius:10px;
 	box-shadow: 0 1px 3px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.5);
 	border-radius:10px;
@@ -32,16 +32,10 @@
 	padding-left: 10px;
 }
 
-#comments #ds-thread .ds-like-thread-button:hover{
+#comments #ds-thread #ds-reset .ds-meta .ds-like-thread-button:hover{
 	box-shadow:0px 0px 5px #E0FF96;
 }
 
-#comments #ds-thread .ds-thread-like-text:before {
-	content : url(http://taozeyu.com/public/icon/icon-like.png);
-}
-#comments #ds-thread .ds-thread-cancel-like:before {
-	content : url(http://taozeyu.com/public/icon/icon-unlike.png);
-}
 #comments #ds-thread .ds-like-panel {
 	padding-left: 12px;
 	color: #FFFFFF;
@@ -76,4 +70,15 @@
 	border-left-color: #444444;
 	margin-bottom: 25px;
 	margin-top: 25px;
+}
+#comments #ds-thread .ds-post-self {
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+}
+
+#comments #ds-thread .ds-post-self p {
+	font-size: 16px;
+	color: #FFFFFF;
 }
