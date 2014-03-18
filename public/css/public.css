@@ -222,7 +222,7 @@ ul {
 	padding-bottom: 77px;
 }
 #post-list {
-	min-height 678px;
+	min-height : 678px;
 }
 #post-list .buble-container {
 	margin-top: 30px;
