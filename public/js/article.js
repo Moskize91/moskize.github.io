@@ -146,21 +146,26 @@ YUI().use("node", "overlay", "anim", function(Y){
         }
     };
     
-    var addClickEvent = function(i) {
-        var a = Y.one("#index-"+i+" a");
-        var top = articleNodes[i].top;
-        var center = articleNodes[i].top + (articleNodes[i].bottom - articleNodes[i].top) / 2;
+    var getTargetPoint = function(node) {
+        var top = node.top;
+        var center = node.top + (node.bottom - node.top) / 2;
         var targetPoint = top + 160;
         if(targetPoint > center) {
             targetPoint = center;
         }
+        return targetPoint;
+    };
+    
+    var addClickEvent = function(i) {
+        var a = Y.one("#index-"+i+" a");
+        var node = articleNodes[i];
         a.on('click', function(evt){
             var anim = new Y.Anim({
                 duration: 0.5,
                 node: 'win',
                 easing: 'easeBoth',
                 to: {
-                    scroll: [0, targetPoint - win.get('winHeight')/2]
+                    scroll: [0, getTargetPoint(node) - win.get('winHeight')/2]
                 }
             });
             anim.run();

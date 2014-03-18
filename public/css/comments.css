@@ -85,6 +85,11 @@
 #comments #ds-thread .ds-post-self p {
 	font-size: 16px;
 	color: #FFFFFF;
+	-moz-user-select: text; /*»ðºü*/
+    -webkit-user-select: text;  /*webkitä¯ÀÀÆ÷*/
+    -ms-user-select: text;   /*IE10*/
+    -khtml-user-select: text; /*ÔçÆÚä¯ÀÀÆ÷*/
+    user-select: text;
 }
 #comments #ds-thread .ds-powered-by a {
 	color: #444444;
