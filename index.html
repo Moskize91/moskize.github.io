@@ -16,7 +16,7 @@ title: 主页
         {% if paginator.previous_page == 1 %}
         <span class="click" onclick="clickButton('/');">&lt;&lt;</span>
         {% else %}
-        <span class="click" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
+        <span class="click" target="_blank" onclick="clickButton('/page{{ paginator.previous_page }}');">&lt;&lt;</span>
         {% endif %}
     {% else %}
     <span class="disable">&lt;&lt;</span>
