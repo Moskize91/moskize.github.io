@@ -1,4 +1,33 @@
-#ds-thread {
+#comments {
 	font-size: 15px;
-	margin-top: 35px;
+	margin-top: 47px;
+}
+#comments div {
+	text-shadow: rgba(0, 0, 0, 0.498039) 0px 1px 3px;
+}
+#comments #ds-thread #ds-reset .ds-meta {
+	background-color: #444444;
+	padding: 17px;
+	margin-left: 10px;
+	box-shadow: 0 3px 10px rgba(0,0,0,.1);
+	-moz-border-radius:1em; -webkit-border-radius:1em; border-radius:1em;
+}
+#comments #ds-thread .ds-like-thread-button{
+	-moz-border-radius:10px; -webkit-border-radius:10px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.5);
+	border-radius:10px;
+	background-color: #555555;
+	margin-right: 7px;
+	padding-top: 5px;
+	padding-right: 10px;
+	padding-bottom: 5px;
+	padding-left: 10px;
+}
+
+#comments #ds-thread .ds-like-thread-button:hover{
+	box-shadow:0px 0px 5px #E0FF96;
+}
+
+#comments #ds-thread .ds-icon-heart {
+
 }
