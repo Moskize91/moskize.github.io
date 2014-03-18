@@ -44,7 +44,6 @@ YUI().use("node", "overlay", "anim", function(Y){
     };
     
     var onFixDiv = function(index, overlay, cursor) {
-        Y.log("fix");
         index.addClass("fix-y");
         overlay.move(index.get('offsetLeft'), 0);
     };
@@ -166,7 +165,6 @@ YUI().use("node", "overlay", "anim", function(Y){
             });
             anim.run();
             evt.preventDefault();
-            Y.log([top, center, targetPoint]);
         });
     };
     

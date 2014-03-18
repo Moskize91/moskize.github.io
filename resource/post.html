@@ -18,139 +18,341 @@
 			</div>
 			<div id="website-root-nav">
 				<ul>
-					<li class="current"><a href="/">主页</a></li>
-					<li><a href="/">娱乐</a></li>
-					<li><a href="/">关于我</a></li>
+					<li class="current"><a href="#">主页</a></li>
+					<li><a href="#">娱乐</a></li>
+					<li><a href="#">关于我</a></li>
 				</ul>
 			</div>
 			<div style="clear:both;"></div>
 		</div>
 	</div>
 	<div class="center">
-		<div id="article" class="buble-container">
-			<div class="title">译译网第一次更新.20140314版</div>
-			<div class="content">
-<p> 通过之前的文章《KindEditor的安装和使用》的介绍，我们已经可以令我们的网页上出现一个KindEditor在线文本编辑器。我们可以直接使用它，在里面添加文字，编辑其格式，排版什么的。完了，我们还可以把内容提交到服务器（用于发表文章，编辑文章等，这就看具体业务需求了）。 </p> 
-<p> 好了，但是仅仅做到这一步，你会发现如果试图上传图片，只会弹出一个404错误窗口。（如果你没有得到错误窗口，你一定不是按照我在<a href="http://taozeyu.com/articles/13" target="_blank" rel="nofollow">《KindEditor的安装和使用》</a>中介绍的方法安装的，那么你也许不必继续看了，因为按照特定语言的安装方法安装的话，应该一切都搞定了才对。） </p> 
-<p> 那么我们就来做一个上传功能吧。首先，后台服务器应该为前台提供一个接口，接收上传的图片，然后把它保存在服务器的文件系统内（或存储在数据库中，或其他，具体如何做由你自己决定），然后，将能访问到该图片的url返回给前台。 </p> 
-<p> 后台具体如何实现，取决于你用什么语言，用什么技术。我大概演示下用Ruby on Rails如何实现后台。 </p> 
-<div class="highlight"><pre><code class="ruby"><span class="lineno"> 1</span> <span class="c1"># app/controller/image_upload_controller.rb</span>
-<span class="lineno"> 2</span> <span class="k">class</span> <span class="nc">ImageUploadController</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="no">ApplicationController</span>
-<span class="lineno"> 3</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="k">def</span> <span class="nf">upload</span>
-<span class="lineno"> 4</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="n">_upload</span> <span class="o">=</span> <span class="n">params</span><span class="o">[</span><span class="ss">:imgFile</span><span class="o">]</span>
-<span class="lineno"> 5</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="n">_name</span> <span class="o">=</span> <span class="n">create_image_name</span>
-<span class="lineno"> 6</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="n">_path</span> <span class="o">=</span> <span class="no">File</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="no">Directory</span><span class="p">,</span> <span class="n">_name</span><span class="p">)</span>
-<span class="lineno"> 7</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="no">File</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">_path</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="n">wb</span><span class="o">&amp;</span><span class="n">quot</span><span class="p">;)</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
-<span class="lineno"> 8</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_upload</span><span class="o">.</span><span class="n">read</span><span class="p">)</span>
-<span class="lineno"> 9</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="k">end</span>
-<span class="lineno">10</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="n">render</span> <span class="ss">:json</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="p">{</span>
-<span class="lineno">11</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="ss">:error</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="mi">0</span><span class="p">,</span>
-<span class="lineno">12</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="ss">:url</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="o">/</span><span class="n">upload</span><span class="o">/</span><span class="n">images</span><span class="o">/</span><span class="c1">#{_name}&amp;quot;</span>
-<span class="lineno">13</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="p">}</span><span class="o">.</span><span class="n">to_json</span>
-<span class="lineno">14</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="nb">puts</span> <span class="n">_path</span>
-<span class="lineno">15</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="nb">puts</span> <span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="c1">#{Directory}#{_name}&amp;quot;</span>
-<span class="lineno">16</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="k">end</span>
-<span class="lineno">17</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
-<span class="lineno">18</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="kp">private</span>
-<span class="lineno">19</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
-<span class="lineno">20</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="no">TimeFormat</span> <span class="o">=</span> <span class="s1">&#39;%Y%m%d%H%M%a&#39;</span>
-<span class="lineno">21</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="no">Directory</span> <span class="o">=</span> <span class="s1">&#39;public/upload/images/&#39;</span>
-<span class="lineno">22</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
-<span class="lineno">23</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="k">def</span> <span class="nf">create_image_name</span>
-<span class="lineno">24</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="no">IMG</span><span class="c1">#{Time.now.strftime(TimeFormat)}#{rand(0..9999)}.jpg&amp;quot;</span>
-<span class="lineno">25</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span> <span class="k">end</span>
-<span class="lineno">26</span> <span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
-<span class="lineno">27</span> <span class="k">end</span>
+<div id="article" class="buble-container">
+    <div class="title">JVM类装载机制的解析，以及热更新的探讨</div>
+    <div class="content">
+    <h1>引言</h1>
+<p>写这篇文章源自一年前对诸如此类问题的好奇和困惑，当时咨询过其他人，也搜集过一些资料，苦于当时不能立即解惑。之后断断续续过了一年，一直在零星搜集这方面的资料，直到今天，大致搜集圆满了。遂成此文，方便日后我自己查看，也分享给大家。
+<p>
+文章内容其实很多都是我个人推断的结果，虽然有参考一些文献，但这些文献都是零星的，不完整的。（如果有人有完整的，总结性的文献，请发给我，感激不尽。这种文献一定是有的，只是我没找到而已。）用百度的话说，我这是“脑补文”，不是“干货文”。
+<p>
+因此，尽管只有我认为是正确无误的内容我才会写入本文中，但也切勿在未经甄别的情况下引用本文内容。如有错误，请批评指正。
+<p>
+Java是一种动态连接的语言。所谓动态连接，大概可以这么解释。
+<p>
+首先，Java可以大概想象成是编译解释执行的。对于一个*.java的文件，通过javac将会编译成一个*.class文件。而JVM会解释执行*.class文件。但一个软件不可能只有一个class文件，一个项目往往有众多的class文件。这些class存储了足以供JVM执行的字节码，但却只有在连接之后才能执行。
+<p>
+所谓的Java是动态连接的语言，是指class文件并非在编译时连接的，而是在运行时连接的。对于编译器而言，当它编译一个java文件，它就只会编译这个java文件，不同的java文件的编译彼此不会影响。（虽然javac会通过java文件之间的依赖关系搜索并编译其他的与之有依赖的java文件，且在搜索不到的时候报错，但实质上这只是一种主观上的限制罢了。）这也是Java编译器区别于C/C++编译器的地方。
+<p>
+正因为class的连接发生在运行时，因此才需要考虑所谓的加载器，以及令讨论热更新成为可能。
+
+<h1>JVM的类加载机制。</h1>
+<p>
+JVM加载、连接的基本单位为class文件（或称一个类），值得注意的是，加载并非以java文件为单位。虽然大部分情况下一个java文件对应一个class文件，但是当java文件中定义了匿名类、内部类的时候，一个java文件将生成多个class文件。
+<p>
+类是如何加载的呢？
+<p>
+类的加载大致由这么几个步骤组成：
+<ul>
+<li>（1）找到，并加载类的字节码</li>
+<li>（2）解析字节码，并进行安全性检查</li>
+<li>（3）初始化类</li>
+<li>（?）将符号引用转化为实例引用</li>
+<p>
+JVM的加载机制是很有趣的，以至于我所列出的四项中还出现了一个问号（不是我打错字了哦）。我将采用问答的形式引出这里面的玄机。
+<p>
+问：这四个步骤分别在何时发生。
+<p>
+答：除了第三部“初始化类”，其余的步骤均不知道何时发生。因为JVM只对第三步的执行的时机进行了定义，其他的都是未定义的。这意味着其他三步实现的时机依赖于虚拟机的具体实现。
+<p>
+我们不能假定除了“初始化类”的其他步骤发生的时机！
+<p>
+那么“初始化类”何时发生呢？初始化类，在且只能在第一次发生下列事情的任何一个时进行：类的静态成员变量被使用、类的静态方法被调用、类被实例化、类作为启动类需要被调用main(String[])方法、类的子类需要被初始化、反射操作涉及到该类。（应该就是这几个，没有记漏的话）
+<p>
+值得注意的是，强制类型转化判定、获取类的实例（即Class对象），绝对不会触发初始化类事件，实际上在解析字节码，并进行安全性检查这一步骤的结果就是获得一个Class实例。
+<p>
+因此，假定有一个类叫做com.tzy.A的类，下列语句是不会触发初始化类操作的：
+
+<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="n">Object</span> <span class="n">obj</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
+<span class="lineno"> 2</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span> <span class="n">a</span> <span class="o">=</span> <span class="o">(</span><span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+<span class="lineno"> 3</span> <span class="n">Object</span> <span class="n">obj</span><span class="o">=</span><span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
+<span class="lineno"> 4</span> <span class="c1">//使用反射的方法也不会！</span>
+<span class="lineno"> 5</span> <span class="c1">//可见不是所有的反射方法都会触发初始化类操作。</span>
+<span class="lineno"> 6</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isInstance</span> <span class="n">obj</span><span class="o">);</span>
+<span class="lineno"> 7</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;com.tzy.A&quot;</span><span class="o">);</span>
+<span class="lineno"> 8</span> 
+<span class="lineno"> 9</span> <span class="c1">//而下列语句一定会触发初始化类操作！</span>
+<span class="lineno">10</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">();</span>
+<span class="lineno">11</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">.</span><span class="na">someValue</span> <span class="o">=</span> <span class="mi">5</span><span class="o">;</span>
+<span class="lineno">12</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">.</span><span class="na">someMethod</span><span class="o">(</span><span class="s">&quot;helloworld&quot;</span><span class="o">);</span>
+<span class="lineno">13</span> <span class="nl">cmd:</span><span class="n">Java</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span>
+<span class="lineno">14</span> 
+<span class="lineno">15</span> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span> <span class="kd">extends</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">A</span><span class="o">{</span>
+<span class="lineno">16</span>     <span class="o">......</span>
+<span class="lineno">17</span> <span class="o">}</span>
+<span class="lineno">18</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span><span class="o">();</span><span class="c1">//先初始化A，再初始化B。</span>
 </code></pre></div>
-<p> 处理细节上，我的后台是直接将上传的图片保存在public/upload/images/文件夹里面，在Ruby on Rails中，public下的资源浏览器可以直接访问。假如图片在服务器中的地址是 public/upload/images/IMG.jpg，则用户直接在浏览器中输入 http://www.XXX.com/upload/images/IMG.jpg就可以访问到该图片。 </p> 
-<p> 你当然可以把图片保存在数据库，但是只要能提供图片的url地址就行。不同的语言后台实现不一，但是只要注意两点就行了。 </p> 
-<ol> 
- <li> <span style="line-height:1.5;font-size:12.5px;">向前端提供一个用于上传图片的url接口。KindEditor会用POST方法访问该url从而把图片上传给服务器。</span> </li> 
- <li> 在处理完上传的图片后（保存在本地，或存储在数据库），返回一个json给客户端。这个json最重要的信息是，成功上传图片的url地址。 </li> 
-</ol> 
-<span style="line-height:1.5;font-size:12.5px;"><span></span></span> 
-<p> 根据官方文档，这个json的格式应该是这样的： </p> 
-<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="c1">//成功时</span>
-<span class="lineno"> 2</span> <span class="p">{</span>
-<span class="lineno"> 3</span>         <span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">error</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
-<span class="lineno"> 4</span>         <span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">url</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span> <span class="o">:</span> <span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">http</span><span class="o">:</span><span class="c1">//www.example.com/upload/images/IMG.jpg&amp;quot;</span>
-<span class="lineno"> 5</span> <span class="p">}</span>
-<span class="lineno"> 6</span> <span class="c1">//失败时</span>
-<span class="lineno"> 7</span> <span class="p">{</span>
-<span class="lineno"> 8</span>         <span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">error</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
-<span class="lineno"> 9</span>         <span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">message</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span> <span class="o">:</span> <span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="err">错误信息</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span>
-<span class="lineno">10</span> <span class="p">}</span>
+<p>
+所谓初始化类，指调用类中的static语句块，将所有静态变量赋初值等。在初始化过程中，不论是static语句块，还是静态变量赋初值调用的方法抛出异常，最终都会抛出一个ExceptionIninitalizerError。
+<p>
+那好，现在我们仅仅知道了初始化类发生的时机，但却对其他三个发生的实际一无所知。现实真是这么悲观吗？也不完全是。
+<p>
+我们知道，如果没有加载类的字节码，虚拟机如何解析并生成一个Class实例呢？如果没有一个Class实例，虚拟机如何初始化它呢？显然前三个步骤是递进的，后一个步骤依赖前一个步骤的完成。因此，对于步骤（1）（2），我们知道，最迟在（3）发生之前发生！
+<p>
+那么步骤（？）何时发生呢？要理解步骤（？）何时发生，首先要理解（?）是个什么东西。
+<p>
+首先，我们知道，单独个class文件的编译过程对于其他class文件是透明的。这意味着其他class文件在编译这个层面上无法印象到该class文件。但是，class文件对其他class文件的依赖关系是客观存在的。例如：
+
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">A</span><span class="o">{</span>
+<span class="lineno">2</span> 	<span class="kd">public</span> <span class="nf">someMethod</span><span class="o">(){</span>
+<span class="lineno">3</span> 		<span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span> <span class="n">b</span><span class="o">;</span>
+<span class="lineno">4</span> 		<span class="n">b</span> <span class="o">=</span> <span class="o">(</span><span class="n">com</span><span class="o">.</span><span class="na">tzy</span><span class="o">.</span><span class="na">B</span><span class="o">)</span><span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
+<span class="lineno">5</span> 	<span class="o">}</span>
+<span class="lineno">6</span> <span class="o">}</span>
 </code></pre></div>
-<p> 在编写了后台接收图片上传的url后，要将这个url告诉KindEditor。在配置KindEditor的时候，应该有说必须加上这么一些js脚本。 </p> 
-<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="nx">script</span><span class="o">&amp;</span><span class="nx">gt</span><span class="p">;</span>
-<span class="lineno"> 2</span>         <span class="nx">KindEditor</span><span class="p">.</span><span class="nx">ready</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">K</span><span class="p">)</span> <span class="p">{</span>
-<span class="lineno"> 3</span>                 <span class="nb">window</span><span class="p">.</span><span class="nx">editor</span> <span class="o">=</span> <span class="nx">K</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="s1">&#39;#editor_id&#39;</span><span class="p">);</span>
-<span class="lineno"> 4</span>         <span class="p">});</span>
-<span class="lineno"> 5</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="err">/script&amp;gt;&lt;/pre&gt; 现在，将其该为： </span>
-<span class="lineno"> 6</span> <span class="o">&lt;</span><span class="nx">pre</span><span class="o">&gt;&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="nx">script</span><span class="o">&amp;</span><span class="nx">gt</span><span class="p">;</span>
-<span class="lineno"> 7</span>         <span class="nx">KindEditor</span><span class="p">.</span><span class="nx">ready</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">K</span><span class="p">)</span> <span class="p">{</span>
-<span class="lineno"> 8</span>                 <span class="nb">window</span><span class="p">.</span><span class="nx">editor</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;#editor-id&#39;</span><span class="p">,</span> <span class="p">{</span>
-<span class="lineno"> 9</span> <span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span>                  <span class="nx">uploadJson</span> <span class="o">:</span> <span class="s1">&#39;/image_upload/upload&#39;</span>
-<span class="lineno">10</span> <span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span> <span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span>             <span class="p">});</span>
-<span class="lineno">11</span>         <span class="p">});</span>
-<span class="lineno">12</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="err">/script&amp;gt;</span>
+<p>
+请看这段代码，如果我调用someMethod()方法，一定会抛出强制类型转换异常。为什么呢？因为Object一定不是com.tzy.B的子类？但是JVM如何知道com.tzy.B不是Object的子类呢？
+<p>
+要知道在class文件中，对于com.tzy.B，存起来可能是像这种形式：
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="s">&quot;com.tzy.B&quot;</span>
 </code></pre></div>
-我这么改了以后，等于是为KindEditor的初始化配置了一个参数。即uploadJson，这个参数说明当KindEditor要上传图片的时候，它应该访问哪个url接口。这种初始化参数还有很多。详情可以查看 
-<a href="http://kindeditor.net/docs/option.html" target="_blank" rel="nofollow">官方文档</a>。鉴于本篇只讨论上传图片，其他参数就不罗嗦了。 
-<p> （哦，还有，本文的代码仅供参考，直接复制粘贴肯定不能运行的。如果非要复制粘贴，请将代码中的特定部分改为你的项目中的内容。） </p> 之后，如果使用KindEditor的上传图片功能，在一段时间的等待后，你将看到上传的图片出现在编辑区内。这就代表成功了。 
-<p> 如果上传图片成功（没有出现错误信息），但是图片却在编辑区内无法显示，那么就检查一下json返回的那个图片url信息是否正确吧。试图将它输入到浏览器中，试试浏览器能否访问到该图片。总之，要让那个url是有效的。 </p> 
-<p> 哦，写到这里我突然想起来了一个东西，就是错误信息。官方文档说uploadJson参数的url应该返回一个json，但是，如果我偏不返回json，而是返回一个Content-Type=text/html的页面，那么KindEditor将视为图片上传失败的错误，并将这个页面以弹出对话框的形式显示出来。（我只试过4.1，其他版本是否如此没试过。） </p> 
-<p> 因此如果你不想让图片上传失败后仅仅显示文字的话，返回一个漂亮点的页面提醒图片上传失败了，也是可以的。KindEditor会把它显示出来。 </p> 
-<span id="OSC_h1_1"></span>
-<h1> 附录：上传图片时发生CSRF校验错误 </h1> 
-<p> <span></span> </p> 
-<p> 不同的语言和技术，这个错误信息的描述可能不一样。但是，看到这条错误信息，你大概就知道是怎么回事了。如果你使用Ruby on Rails开发后台，那么默认情况下对于浏览器提交的POST方法，都会进行CSRF校验。（实际上Rails还会对PUT，DELETE方法校验，但这就扯远了，和本主题无关了。） </p> 
-<p> 为什么要校验，请参考<a href="http://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/" target="_blank" rel="nofollow">《CSRF攻击的应对之道》</a>。如果你对CSRF攻击不感兴趣，只想知道如何令你的图片可以通过验证成功上传，也没关系。<span></span> </p> 
-<p> 遗憾的是，KindEditor似乎没有提供CSRF验证的支持（这点尚未考证，我接触KindEditor不久，如有勿请告诉我），因此，如果你的后台程序要求CSRF验证，那么，KindEditor的图片肯定不能上传成功。 </p> 
-<p> 因此，最简单的解决方法，就是<strong>关掉CSRF验证</strong>。关掉整个服务器的CSRF验证肯定是把玩笑开大了，那么你可以只关掉上传图片的url的验证。 </p> 
-<p> 但这么一来，就算是阿猫阿狗都能通过你的url向你的服务器疯狂上传图片了。所以，手动写一段过滤程序吧。例如必须是登录用户且有上传图片权限的用户才能上传图片，否则直接返回error。 </p> 
-<p> 但是，你可能会说，我一定要验证，不验证不行！那么，就去<strong>改KindEditor的源代码</strong>吧。怎么改网上貌似还是有很多，但是大家改法不一。我也把我改的东西贴出来，这样也多一个参考。 </p> 
-<p> CSRF的验证有很多种，一定要知道自己的后台如何验证才能开始动手改。例如我是用的Ruby on Rails，它会在html页面的head中加入如下信息。 </p> 
-<p> <br /> </p> 
-<pre class="brush:html; toolbar: true; auto-links: false;">&lt;meta name=&quot;csrf-param&quot; content=&quot;authenticity_token&quot;/&gt;
-&lt;meta name=&quot;csrf-token&quot; content=&quot;eNaG5Hp25pctFmtko9LEvXWtbnBXnN8wxzzlcpMeupc=&quot;/&gt;</pre> 
-<p> <span style="font-size:12.5px;line-height:1.5;">如果在POST提交的时候加一个字段 </span>'authenticity_token' =&gt;'eNaG5Hp25pctFmtko9LEvXWtbnBXnN8wxzzlcpMeupc='，那么验证就会通过，至少Rails是如此。但是，这个csrf-token不是一个固定值，因此每次提交图片的时候必须动态的从head里取才行。 </p> 
-<p> 因此，我们要通过修改KindEditor的源代码，令它在上传图片的时候，把authenticity_token字段带上。 </p> 
-<p> 首先，找到kindeditor.js文件，然后找到大约4100行前后的范围（我的版本是4.1.x具体忘了），算了，我不写怎么找了，反正也不好找。我直接贴出我是怎么改的，如果你要想跟着改的话，直接ctrl+F找到附近位置就好了。 </p> 
-<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> 		<span class="kd">var</span> <span class="nx">hiddenElements</span> <span class="o">=</span> <span class="p">[];</span>
-<span class="lineno"> 2</span> 		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">k</span> <span class="k">in</span> <span class="nx">extraParams</span><span class="p">){</span>
-<span class="lineno"> 3</span> 			<span class="nx">hiddenElements</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;&amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">k</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot; value=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">extraParams</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot; /&amp;gt;&#39;</span><span class="p">);</span>
-<span class="lineno"> 4</span> 		<span class="p">}</span>
-<span class="lineno"> 5</span> 	       <span class="c1">//MOsky inserts this code.</span>
-<span class="lineno"> 6</span> 		<span class="kd">var</span> <span class="nx">csrfParam</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">meta</span><span class="p">[</span><span class="nx">name</span><span class="o">=</span><span class="s1">&#39;csrf-param&#39;</span><span class="p">]</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;).</span><span class="nx">attr</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">content</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;);</span>
-<span class="lineno"> 7</span> 		<span class="kd">var</span> <span class="nx">csrfToken</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">meta</span><span class="p">[</span><span class="nx">name</span><span class="o">=</span><span class="s1">&#39;csrf-token&#39;</span><span class="p">]</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;).</span><span class="nx">attr</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;</span><span class="nx">content</span><span class="o">&amp;</span><span class="nx">quot</span><span class="p">;);</span>
-<span class="lineno"> 8</span> 		<span class="c1">//End insert</span>
-<span class="lineno"> 9</span> 		<span class="kd">var</span> <span class="nx">html</span> <span class="o">=</span> <span class="p">[</span>
-<span class="lineno">10</span> 			<span class="s1">&#39;&amp;lt;div class=&amp;quot;ke-inline-block &#39;</span> <span class="o">+</span> <span class="nx">cls</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot;&amp;gt;&#39;</span><span class="p">,</span>
-<span class="lineno">11</span> 			<span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">target</span> <span class="o">?</span> <span class="s1">&#39;&#39;</span> <span class="o">:</span> <span class="s1">&#39;&amp;lt;iframe name=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">target</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot; style=&amp;quot;display:none;&amp;quot;&amp;gt;&amp;lt;/iframe&amp;gt;&#39;</span><span class="p">),</span>
-<span class="lineno">12</span> 			<span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">form</span> <span class="o">?</span> <span class="s1">&#39;&amp;lt;div class=&amp;quot;ke-upload-area&amp;quot;&amp;gt;&#39;</span> <span class="o">:</span> <span class="s1">&#39;&amp;lt;form class=&amp;quot;ke-upload-area ke-form&amp;quot; method=&amp;quot;post&amp;quot; enctype=&amp;quot;multipart/form-data&amp;quot; target=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">target</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot; action=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">url</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot;&amp;gt;&#39;</span><span class="p">),</span>
-<span class="lineno">13</span> 			<span class="s1">&#39;&amp;lt;span class=&amp;quot;ke-button-common&amp;quot;&amp;gt;&#39;</span><span class="p">,</span>
-<span class="lineno">14</span> 			<span class="nx">hiddenElements</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">),</span>
-<span class="lineno">15</span> 			<span class="c1">//MOsky inserts this code.</span>
-<span class="lineno">16</span> 			<span class="s1">&#39;&amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;&#39;</span><span class="p">,</span> <span class="nx">csrfParam</span><span class="p">,</span> <span class="s1">&#39;&amp;quot; value=&amp;quot;&#39;</span><span class="p">,</span> <span class="nx">csrfToken</span><span class="p">,</span> <span class="s1">&#39;&amp;quot;/&amp;gt;&#39;</span><span class="p">,</span>
-<span class="lineno">17</span> 			<span class="c1">//End insert</span>
-<span class="lineno">18</span> 			<span class="s1">&#39;&amp;lt;input type=&amp;quot;button&amp;quot; class=&amp;quot;ke-button-common ke-button&amp;quot; value=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">title</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot; /&amp;gt;&#39;</span><span class="p">,</span>
-<span class="lineno">19</span> 			<span class="s1">&#39;&amp;lt;/span&amp;gt;&#39;</span><span class="p">,</span>
-<span class="lineno">20</span> 			<span class="s1">&#39;&amp;lt;input type=&amp;quot;file&amp;quot; class=&amp;quot;ke-upload-file&amp;quot; name=&amp;quot;&#39;</span> <span class="o">+</span> <span class="nx">fieldName</span> <span class="o">+</span> <span class="s1">&#39;&amp;quot; tabindex=&amp;quot;-1&amp;quot; /&amp;gt;&#39;</span><span class="p">,</span>
-<span class="lineno">21</span> 			<span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">form</span> <span class="o">?</span> <span class="s1">&#39;&amp;lt;/div&amp;gt;&#39;</span> <span class="o">:</span> <span class="s1">&#39;&amp;lt;/form&amp;gt;&#39;</span><span class="p">),</span>
-<span class="lineno">22</span> 			<span class="s1">&#39;&amp;lt;/div&amp;gt;&#39;</span><span class="p">].</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">);</span>
-<span class="lineno">23</span> 		<span class="kd">var</span> <span class="nx">div</span> <span class="o">=</span> <span class="nx">K</span><span class="p">(</span><span class="nx">html</span><span class="p">,</span> <span class="nx">button</span><span class="p">.</span><span class="nx">doc</span><span class="p">);</span>
+<p>
+对，就只是一个字符串而已。但是它表示一个类，但是在编译阶段无法验证这个字符串表示到底哪一个类，这个工作只有虚拟机能做，编译器是不管的（除了语法上的验证，但我在后面会说明，有时这个语法上的验证是不应该有的）。
+<p>
+字符串的理解，全凭虚拟机解释。虚拟机会将”com.tzy.B”这个字符串转化成一个Class实例。通过Class实例，可以访问到这个类的声明信息，因此，可以判断Object一定不是它的子类，从而抛出强制类型转换异常。
+<p>
+这个过程就叫做将符号引用转化为实例引用。
+<p>
+这个转化过程在何时发生呢？不知道。它一定发生在第二步之后，但既可能发生在第三步之前，也可能发生在第三步之后。
+<p>
+因此，对于我们的一个应用程序，我们可以这么理解，以做个总结。
+<ol>
+<li>1、应用程序由许多class文件构成。</li>
+
+<li>2、每一个class文件一般会依赖其他class文件，它将依赖的其他class的名字保留下来。所谓class文件的名字，一般是诸如com.tzy.Test、java.lang.String等等形式。</li>
+<li>3、对于应用程序而言，有且只有一个启动class文件，它是一个包含public static void main(String[])方法的public类。</li>
+因此，我们可以构造这么一张“图”。我们假定每一个class文件为一个节点。将启动class文件设为根节点。并定义，如果某一个class文件中出现了另外一个class文件的名字，则用一根单向箭头从这个class文件的节点指向另一个class文件节点。最终，我们得到了一张有一个根节点，且能表示class文件之间依赖关系的“图”。</li>
+而从根节点触发，可达的节点集合，则是我们的应用程序会被载入的class文件的最大集合！</li>
+之所以是最大集合，是因为虚拟机的机制尽可能的减少加载如内存的class数量。但，好在我们得到了一个最大值。因此，可以安心的假定，离开这个集合的class绝对不会被载入。</li>
+</ol>
+
+<h1>类装载器</h1>
+当某个类对其他类存在依赖关系时，这种依赖关系只会以符号引用的形式存在于class文件中。而这种符号引用所代表的类究竟是什么类，取决于虚拟机如何解释。解释的结果，是获取一段二进制的字节码。一般而言，这段二进制的字节码读取自文件，因此，所谓的将符号引用转化为实例引用，就是将类名定位到*.class文件。
+<p>
+Java通过类加载器来实现二进制字节码的获取。
+<p>
+除了极个别特殊的类，Java中绝大部分的类的实例（Class对象），都是通过某个类加载器的实例获取的。类加载器继承自一个抽象类ClassLoader。
+<p>
+我们可以通过实例方法Class.getClassLoader()方法，来得到某个类的加载器。就像一个孩子只能由一个母亲所生一样，一个类实例只能有一个ClassLoader。
+<p>
+ClassLoader的职能在于，通过类名，生成并返回一个Class实例。我们可以通过主动调用Class类的forName方法，指定使用某个ClassLoader载入Class实例。
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="n">String</span> <span class="n">className</span><span class="o">,</span><span class="kt">boolean</span> <span class="n">init</span><span class="o">,</span><span class="n">ClassLoader</span> <span class="n">classLoader</span><span class="o">)</span>
 </code></pre></div>
-<pre class="brush:js; toolbar: true; auto-links: false;">//MOsky inserts this code. 后的内容是我插入的，不属于源代码的内容。</pre> 
-<p> 原理就是我直接从html文件的head中将这两个标签中的值取出来。 </p> 
-			</div>
-		</div>
-		<div id="article-index">
-			<div>
-			  <h4>文章索引</h4>
-			</div>
-		</div>
-		<div style="clear:both;"></div>
+<p>
+主动调用这个方法，从而获取Class实例，我个人把这个叫做显式装载。
+<p>
+此外，当虚拟机执行过程中需要获取某个Class实例，手头上却只有该类的符号引用时。虚拟机将隐式的使用类加载器加载这个类，并获取其实例。我把这个叫做隐式装载。
+<p>
+无论装载是显式还是隐式，对于ClassLoader本身而言是一样的，最终会调用到ClassLoader的方法：
+<p>
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="kd">protected</span> <span class="n">Class</span><span class="o">&lt;&amp;</span><span class="n">iexcl</span><span class="o">;&gt;</span> <span class="n">findClass</span><span class="o">(</span><span class="n">String</span> <span class="n">className</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">ClassNotFoundException</span><span class="o">;</span>
+</code></pre></div>
+<p>
+这个方法就是用来重写的。
+<p>
+值得注意的是，隐式装载会使用哪一个ClassLoader呢？经过我的实验，隐式装载所使用的符号引用来自哪一个Class，则使用哪一个Class的ClassLoader。
+<p>
+这种机制就会引发一个有趣的现象。还记得我之前说的“图”吗？当使用某一个ClassLoader载入某一个根class节点后，该class将逐步的、递归的、隐式的加载各种各样的class文件。而由此派生出来的Class对象，全部都是由最初的ClassLoader载入的。
+<p>
+此外，不得不说的是，ClassLoader有两个重要的特征。其一是父节点委派机制，其二是符号引用隔离机制。（我自己取的名字，如果找到正确的名字请告诉我。）
+<p>
+其一、父节点委派机制
+<p>
+任何一个ClassLoader实例都可以看做家族树上的一个节点。这意味着你可以给ClassLoader分配一个父亲节点（父亲节点同样是ClassLoader），实际上，不管你愿不愿意，用户自定义的ClassLoader一定会分配一个父亲节点的！
+<p>
+当使用某一个ClassLoader装载一个Class时（不论显式还是隐式），该ClassLoader一定会首先使用用它的父节点装载该Class。如果它的父节点能够装载，则直接返回，此时就没自己什么事了。只有当其父节点抛出ClassNotFoundException时，才调用自己的findClass方法装载。
+<p>
+这就是父节点委派机制。注意，当子节点将装载任务委派给父节点时，父节点同样要遵循父节点委派机制，这样父节点首先还要将加载任务委派给它的父节点。这样变成了一个层层递归委派的过程。
+<p>
+于是，处于家族树最顶端的ClassLoader拥有最高优先权。只有上端ClassLoader宣布它不能载入的Class，下端才能捡漏将其载入。因此，子节点休想越俎代庖，做了本该它父亲该做的事情。
+<p>
+其二、符号引用隔离机制
+<p>
+JVM为每一个ClassLoader实例（注意不是类，是实例）维系了一个个彼此独立的命名空间。这种命名空间仅在虚拟机上表现，在语言层面无法表现。因此，在编写Java程序时，常常无法感受到命名空间的存在。
+<p>
+为了描述命名空间为何物，我想举一个例子：
+
+<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="c1">//File:ClassA.java</span>
+<span class="lineno"> 2</span> 
+<span class="lineno"> 3</span> <span class="kd">public</span> <span class="n">ClassA</span><span class="o">{</span>
+<span class="lineno"> 4</span> 
+<span class="lineno"> 5</span> 	<span class="kd">private</span> <span class="kd">static</span> <span class="n">ClassB</span> <span class="n">classB</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassB</span><span class="o">();</span>
+<span class="lineno"> 6</span> 
+<span class="lineno"> 7</span> 	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">setClassB</span><span class="o">(</span><span class="n">Object</span> <span class="n">obj</span><span class="o">){</span>
+<span class="lineno"> 8</span> 		<span class="n">classB</span> <span class="o">=</span> <span class="o">(</span><span class="n">ClassB</span><span class="o">)</span><span class="n">obj</span><span class="o">;</span>
+<span class="lineno"> 9</span> 	<span class="o">}</span>
+<span class="lineno">10</span> 
+<span class="lineno">11</span> 	<span class="kd">public</span> <span class="n">Object</span> <span class="nf">getClassB</span><span class="o">(){</span>
+<span class="lineno">12</span> 		<span class="k">return</span> <span class="n">classB</span><span class="o">;</span>
+<span class="lineno">13</span> 	<span class="o">}</span>
+<span class="lineno">14</span> <span class="o">}</span>
+<span class="lineno">15</span> 
+<span class="lineno">16</span> <span class="c1">//File:ClassB.java</span>
+<span class="lineno">17</span> <span class="kd">public</span> <span class="n">ClassB</span><span class="o">{</span>
+<span class="lineno">18</span> 	<span class="nd">@Override</span>
+<span class="lineno">19</span> 	<span class="kd">public</span> <span class="n">String</span> <span class="nf">toString</span><span class="o">(){</span>
+<span class="lineno">20</span> 		<span class="k">return</span> <span class="s">&quot;className:ClassB&quot;</span><span class="o">;</span>
+<span class="lineno">21</span> 	<span class="o">}</span>
+<span class="lineno">22</span> <span class="o">}</span>
+</code></pre></div>
+<p>
+将这两个文件使用javac编译以后，存储在某一个文件夹中，如d:\test\ab。
+
+<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="c1">//File:MyLoader.java</span>
+<span class="lineno"> 2</span> 
+<span class="lineno"> 3</span> <span class="kn">import</span> <span class="nn">java.io.*</span><span class="o">;</span>
+<span class="lineno"> 4</span> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyLoader</span> <span class="kd">extends</span> <span class="n">ClassLoader</span><span class="o">{</span>
+<span class="lineno"> 5</span> 
+<span class="lineno"> 6</span> 	<span class="nd">@Override</span>
+<span class="lineno"> 7</span> 	<span class="kd">public</span> <span class="n">Class</span> <span class="nf">findClass</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">ClassNotFoundException</span><span class="o">{</span>
+<span class="lineno"> 8</span> 		<span class="n">String</span> <span class="n">className</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
+<span class="lineno"> 9</span> 		<span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="sc">&#39;.&#39;</span><span class="o">,</span><span class="sc">&#39;\\&#39;</span><span class="o">)+</span><span class="s">&quot;.class&quot;</span><span class="o">;</span>
+<span class="lineno">10</span> 		<span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;D:\\test\\ab&quot;</span><span class="o">,</span><span class="n">name</span><span class="o">);</span>
+<span class="lineno">11</span> 		<span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span><span class="n">file</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+<span class="lineno">12</span> 		<span class="kt">byte</span><span class="o">[]</span> <span class="n">bf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">length</span><span class="o">];</span>
+<span class="lineno">13</span> 		<span class="n">InputStream</span> <span class="n">is</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="lineno">14</span> 		<span class="k">try</span><span class="o">{</span>
+<span class="lineno">15</span> 			<span class="n">is</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+<span class="lineno">16</span> 			<span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="lineno">17</span> 			<span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">length</span><span class="o">;</span>
+<span class="lineno">18</span> 			<span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="lineno">19</span> 				<span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">is</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">bf</span><span class="o">,</span><span class="n">start</span><span class="o">,</span><span class="n">length</span><span class="o">);</span>
+<span class="lineno">20</span> 				<span class="n">length</span><span class="o">-=</span><span class="n">i</span><span class="o">;</span>
+<span class="lineno">21</span> 				<span class="n">start</span><span class="o">+=</span><span class="n">i</span><span class="o">;</span>
+<span class="lineno">22</span> 				<span class="k">if</span><span class="o">(</span><span class="mi">0</span><span class="o">==</span><span class="n">i</span> <span class="o">|</span> <span class="o">-</span><span class="mi">1</span><span class="o">==</span><span class="n">i</span><span class="o">){</span>
+<span class="lineno">23</span> 					<span class="k">break</span><span class="o">;</span>
+<span class="lineno">24</span> 				<span class="o">}</span>
+<span class="lineno">25</span> 			<span class="o">}</span>
+<span class="lineno">26</span> 		<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
+<span class="lineno">27</span> 			<span class="k">throw</span> <span class="k">new</span> <span class="nf">ClassNotFoundException</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+<span class="lineno">28</span> 		<span class="o">}</span><span class="k">finally</span><span class="o">{</span>
+<span class="lineno">29</span> 			<span class="k">try</span><span class="o">{</span>
+<span class="lineno">30</span> 				<span class="n">is</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="lineno">31</span> 			<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
+<span class="lineno">32</span> 				<span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+<span class="lineno">33</span> 			<span class="o">}</span>
+<span class="lineno">34</span> 		<span class="o">}</span>
+<span class="lineno">35</span> 		<span class="k">return</span> <span class="nf">defineClass</span><span class="o">(</span><span class="n">className</span><span class="o">,</span> <span class="n">bf</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">bf</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+<span class="lineno">36</span> 	<span class="o">}</span>
+<span class="lineno">37</span> <span class="o">}</span>
+</code></pre></div>
+<p>
+该文件编译后的class文件保存在CLASSPATH下。
+<p>
+之后，我们在main方法中执行如下代码。
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="n">ClassLoader</span> <span class="n">loader1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClassLoader</span><span class="o">();</span>
+<span class="lineno">2</span> <span class="n">ClassLoader</span> <span class="n">loader2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClassLoader</span><span class="o">();</span>
+<span class="lineno">3</span> <span class="n">Class</span> <span class="n">classA1</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;ClassA&quot;</span><span class="o">,</span><span class="kc">false</span><span class="o">,</span><span class="n">loader1</span><span class="o">);</span>
+<span class="lineno">4</span> <span class="n">Class</span> <span class="n">classA2</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;ClassA&quot;</span><span class="o">,</span><span class="kc">false</span><span class="o">,</span><span class="n">loader2</span><span class="o">);</span>
+</code></pre></div>
+<p>
+在这里，我确保d:\test\ab不会被classpath访问到，因此，我们自定义的MyLoader将主动装载ClassA类，并为之生成Class实例。但现在我构造了两个MyClassLoader的实例，但分别载入一次名为”classA”的类，将其返回值赋给了classA1和classA2变量。
+<p>
+那么，问题是，下列语句将输出什么呢？
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">classA1</span><span class="o">==</span><span class="n">classA2</span><span class="o">);</span>
+<span class="lineno">2</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">classA1</span><span class="o">.</span><span class="na">equels</span><span class="o">(</span><span class="n">classA2</span><span class="o">));</span>
+</code></pre></div>
+<p>
+输出结果是：
+<p>
+false
+<p>
+false
+<p>
+这就是类的命名空间机制。JVM为每一个ClassLoader实例（无关他们是否属于同一个ClassLoader的实现类）维系一个命名空间。对于某一个类名，例如”ClassA”，它对应的Class实例到底是哪一个，取决于在哪个命名空间找！
+因此，严格来说，类名和类实例是一对多的关系。
+<p>
+当我对虚拟机说，给我找名叫ClassA的类，那么这是一句错误的话，因为在不告诉虚拟机限制在哪个命名空间的前提下，怎么又能唯一确定Class类的实例呢？
+<p>
+上面的例子很明显，我在同一个虚拟机中，构造了两个同名的Class实例。他们彼此不相等！
+<p>
+只不过如果不涉及ClassLoader的编程，我们自定义的类只会用到一个命名空间，那就是CLASSPATH的命名空间（来源于一个AppClassLoader的实例），因此，一般情况下，我们把Class的名字和实例理解为一对一的关系也没什么大问题。
+<p>
+之后，我们尝试执行以下代码：（编译时记得声明throws Exception）
+<div class="highlight"><pre><code class="java"><span class="lineno">1</span> 	<span class="n">Method</span> <span class="n">getter1</span> <span class="o">=</span> <span class="n">classA1</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&quot;getClassB&quot;</span><span class="o">,</span><span class="k">new</span> <span class="n">Class</span><span class="o">[]{});</span>
+<span class="lineno">2</span> 	<span class="n">Object</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">getter1</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span><span class="k">new</span> <span class="n">Object</span><span class="o">[]{}};</span>
+<span class="lineno">3</span> 	<span class="n">Method</span> <span class="n">setter2</span> <span class="o">=</span> <span class="n">classA2</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&quot;setClassB&quot;</span><span class="o">,</span><span class="k">new</span> <span class="n">Class</span><span class="o">[]{</span><span class="n">Object</span><span class="o">.</span><span class="na">class</span><span class="o">}};</span>
+<span class="lineno">4</span> 	<span class="k">try</span><span class="o">{</span>
+<span class="lineno">5</span> 		<span class="n">setter2</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span><span class="k">new</span> <span class="n">Object</span><span class="o">[]{</span><span class="n">obj</span><span class="o">});</span>
+<span class="lineno">6</span> 	<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">InvocationTargetException</span> <span class="n">e</span><span class="o">){</span>
+<span class="lineno">7</span> 		<span class="n">e</span><span class="o">.</span><span class="na">getTargetException</span><span class="o">().</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="lineno">8</span> 	<span class="o">}</span>
+</code></pre></div>
+<p>
+这段代码的意思是，使用反射，从第一个ClassA的实例利用静态方法getClassB()获取ClassB的实例，并使用第二个ClassA的静态方法setClassB(ClassB)将获取的实例赋值。
+<p>
+之所以用反射，是因为在CLASSPATH的命名空间中是无法访问到MyClassLoader创造的命名空间的。可见反射可以跨越命名空间。
+<p>
+其中注意InvocationTargetException 这个异常，它由invoke抛出，用以封装该方法底层抛出的异常。也就是说，当调用Method.invoke时，假如被调用的方法抛出一个NulPointerException，那么invoke方法对应的抛出一个InvocationTargetException ，然后当调用InvocationTargetException.getTargetException()时，将得到NulPointerException。
+<p>
+这里有两个变量，声明都是ClassB classB，此时将一个命名空间中的classB，赋值另外一个命名空间的classB。两者名字都叫ClassB，字节码也完全一样。这种操作可行吗？
+<p>
+这段代码运行的结果是：抛出ClassCastException。
+<p>
+因为虚拟机根本就没有把两个ClassB当做同一种类型，因此彼此根本无法转换。这也是命名空间的妙用，不同的命名空间构造出两个彼此独立的空间，不但允许两个空间自由使用类名而不用担心重名，而且也不用担心重名类彼此转化而引发混乱。
+<p>
+此外，我虽然没有显示地告诉虚拟机，两个ClassB应该分列不同的命名空间，但是虚拟机确实这么做了。那是因为当我们显示地告诉虚拟机用两个ClassLoader分别载入ClassA时后，两个ClassA在将符号引用转化为实例引用时，隐式的分别使用了两个ClassLoader载入ClassB，从而使ClassB也分别属于两个不同的命名空间。
+<p>
+<h1>父节点委派 + 符号引用隔离 = 命名空间的共享</h1>
+<p>
+父节点委派机制的结果，就是，同一个父节点的命名空间，会且只会被它的所有子节点共享。而子节点的命名空间，对父节点而言是透明的。
+<p>
+这便是JVM的命名空间共享机制。
+<p>
+这个结论源自这么几个推论。当子节点ClassLoader试图翻译某个能被其父节点装载的类名时，这个装载工作在“父节点委派机制”的影响下，一定会被父节点夺走。子节点根本得不到装载的机会，自然不会将该类名添加自自己的命名空间。因此，子节点使用的是父节点命名空间中的类实例。这一条对于所有的子节点都成立。
+<p>
+而父节点一定访问不到子节点命名空间中的类，这可以用反证法得到。因为如果父节点能访问到，那么根据“父节点委派机制”，父节点会夺走所有子节点的这部分工作，最终该类应该属于父节点的命名空间，而不是某个子节点的。
+<p>
+Java提供了三个ClassLoader，它们分别是：Bootstrap、Extension、System（或App）。
+<p>
+其中，Bootstrap是老大，它是一切ClassLoader的父亲节点。当你宣布你的ClassLoader，的父亲节点为null时，那么你的ClassLoader将主动以Bottstrap为父亲节点。它也是Java中唯一一个不是ClassLoader类实例的加载器。当你试图得到Bootstrap时，得到的是null。
+<p>
+如果说Bootstrap的本尊是null的话，那么JVM启动过程就是无极生太极、太极生两仪、两仪生四象、四象生八卦、八卦生万物的过程。
+<p>
+Bootstrap载入%JAVAHOME%\jre\rt.jar 中的类。这里面几乎包含了Java标准库80%的类。
+<p>
+由于Bootstrap是铁打的老大，一切ClassLoader的祖宗，因此，根据“父节点委派机制”，它拥有至高无上的裁决权。因此，任何一个命名空间，一定可以访问到Bootstrap的命名空间，也就是可以访问Java标准库中80%的内容。
+<p>
+同样，假如有一名黑客想要制造一种侵入JVM的病毒，通过在应用程序的命名空间之外加一个病毒加载器，这个病毒加载器替换很多Java标准类库，以达到入侵的目的。这时，这名黑客会发现它的病毒加载器必须以Bootstrap作为父节点，而Bootstrap将粗暴的打断一切病毒加载器企图入侵的行为。
+<p>
+Extension加载器是Bootstrap的子节点。它将载入Java标准库剩余20%的内容。我看了下，有NIO、XML的处理类。是Bootstrap的子节点意味着Extension是可以被替换的，安全性远没有Bootstrap那么高。我个人认为这个加载器没什么好说的。
+<p>
+System加载器又叫做应用加载器，它负责从CLASSPATH路径中加载类，也是Extension的子节点。因为“父节点委派机制”的存在，即便Java标准类库没有出现在CLASSPATH中，应用程序也可以访问到它们。
+<p>
+另外，System加载器也是void main(String[])所在类的加载器。这意味着，除了Java的标准库，应用程序中所有的自定义类全部都是System加载器加载的（不使用显示加载的话）。
+
+    </div>
+</div>
+<div id="article-index">
+    <div>
+      <h4>文章索引</h4>
+    </div>
+</div>
+<div style="clear:both;"></div>
+<!-- Duoshuo Comment BEGIN -->
+	<div class="ds-thread"></div>
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"taozeyu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = 'http://static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		|| document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+<!-- Duoshuo Comment END -->
+
 	</div>
 	<div class="footer">
 		<div class="center">
