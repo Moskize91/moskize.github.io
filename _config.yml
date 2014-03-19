@@ -3,3 +3,4 @@ encoding: utf-8
 
 paginate: 5
 paginate_path: "page:num"
+paginate_path: "funny/page:num"
