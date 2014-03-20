@@ -1,4 +1,4 @@
-YUI().use("node", "overlay", "anim", function(Y){
+YUI({base: '/public/js/yui3/', combine: false }).use("node", "overlay", "anim", function(Y){
     
     var win = Y.one('window');
     var articleNodes = [];
