@@ -27,9 +27,8 @@
 			</div>
 			<div id="website-root-nav">
 				<ul>
-					<li class="current"><a href="#">主页</a></li>
-					<li><a href="#">娱乐</a></li>
-					<li><a href="#">关于我</a></li>
+					<li {% if page.belongs_to == "home" %}class="current"{% endif %}><a href="/">主页</a></li>
+					<li {% if page.belongs_to == "about" %}class="current"{% endif %}><a href="/about.html">关于我</a></li>
 				</ul>
 			</div>
 			<div style="clear:both;"></div>
