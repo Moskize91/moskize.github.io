@@ -11,7 +11,7 @@
 			<div class="buble-container">
 				<div class="title"><a href="{{ post.url }}" target="_blank">{{ post.title }}</a></div>
 				<div class="content"><a href="{{ post.url }}" target="_blank">
-				{{ post.content | strip_html | truncate :200 }}
+				{{ post.content | strip_html | truncate :200 | replace: '\\','\\\\' | replace: '\"','\\\"' | replace: '\'','\\\'' }}
 				</a></div>
 			</div>
 		{% endfor %}
