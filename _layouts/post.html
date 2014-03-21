@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		{% include header.html %}
-		<META NAME="Description" CONTENT="{{ post.content | strip_html | truncate :500 | replace: '\\','\\\\' | replace: '\"','\\\"' | replace: '\'','\\\'' }}">
+		<META NAME="Description" CONTENT="{{ post.content | strip_html | truncate :500 | xml_escape}}">
 		<link href="/public/css/comments.css" rel="stylesheet" type="text/css" />
 		<script src="/public/js/article.js" type="text/javascript"></script>
 
