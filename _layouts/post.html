@@ -22,8 +22,10 @@
 	<div class="center">
 		{% include titler.html %}
 		<div id="article" class="buble-container">
-			{% if page.source %}
+			{% if page.article_type == 'repost' %}
 			<div class="declare" ref="nofollow">本文属转载，{% if page.author %}作者{{ page.author }}，{% endif %}点击<a href="{{ page.source}}" target="_blank" >这里</a>查看原文。</div>
+			{% else if page.article_type == 'translation'%}
+			<div class="declare" ref="nofollow">翻译贴，{% if page.author %}原文作者{{ page.author }}，{% endif %}点击<a href="{{ page.source}}" target="_blank" >这里</a>查看原文。</div>
 			{% endif %}
 			<div class="title can-select">{{ page.title}}</div>
 			<div class="content can-select">
