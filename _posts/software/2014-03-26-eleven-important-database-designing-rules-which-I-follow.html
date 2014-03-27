@@ -4,7 +4,7 @@ category: software
 article_type : translation
 author: ShivprasadKoirala
 source : http://www.codeproject.com/Articles/359654/
-title : 前微软工程师建议的11条数据库设计准则
+title : 微软工程师建议的11条数据库设计准则
 ---
 <h1>简介</h1>
 <p>作者：Shivprasad koirala</p>
@@ -130,4 +130,22 @@ developer们是一种可爱的生物。如果你告诉他们一种方法，他�
 你有没有严格执行“避免冗余”这条命令？要是性能问题很紧迫呢？想不想考虑一下非标准方案？用标准方案，你通常要大量使用连接操作。而非标准方案却可以减少连接操作——通过增加冗余。
 </p>
 
-<p>未完待续...</p>
+<h1>准则九：多维数据是一种完全不同的野兽</h1>
+<img src="/public/upload/images/important-database-designing-rules-which-I-follow-012.jpg" />
+<p>OLAP 项目主要处理多维数据。如图，就需要知道每个国家、顾客、某年某月的销量。简单来说，所关注的“销量”是三个维度的数据的交集。</p>
+
+<p>这种情况下，最好设计成一维的情况。简单说来，就是建一个中心表来存储销量（通过设置一个Sales的字段）。然后将其他维度的信息作为副表，并通过外键与中心表建立联系。</p>
+<img src="/public/upload/images/important-database-designing-rules-which-I-follow-013.jpg" />
+
+<h1>准则十：使用集合设计处理键-值表</h1>
+<p>我经常遇到的另一种表叫键-值表。它存储着<b>键</b>和与键对应的<b>值</b>。如下图的 Currency 和 Country 表，仔细看看，这两张表其实仅仅包含键和值罢了。</p>
+<img src="/public/upload/images/important-database-designing-rules-which-I-follow-014.jpg" />
+
+<p>这种情况下，更明智的方案是，用一个<b>集合表</b>存下这两个表的全部信息，并设立一个 Type 字段来区分值的类型。</p>
+<h1></h1>
+<p>
+我也经常碰上那种无限层级的情况。例如，有一个多级营销方案，一个销售商下面还有很多很多销售商。这种情况下，引用自身的主键和使用外键，都可以得到相同的效果。</p>
+<img src="/public/upload/images/important-database-designing-rules-which-I-follow-015.jpg" />
+
+<p>我之所以这么说，并非叫你不要遵循范式，而是叫你别盲目遵循就行了。首先，应该是确认你的项目的类型和你要处理的数据的类型。</p>
+<img src="/public/upload/images/important-database-designing-rules-which-I-follow-016.jpg" />
