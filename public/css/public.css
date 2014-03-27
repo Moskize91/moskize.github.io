@@ -75,6 +75,24 @@ ul {
 .fix-y {
 	position: fixed;
 }
+.quote {
+	padding: 5px;
+	margin: 5px;
+	background: #333;
+	box-shadow: inset 0 1px 3px rgba(0,0,0,.3), 0 1px 1px rgba(255,255,255,.5);
+	-webkit-border-top-left-radius:2em;
+	-webkit-border-top-right-radius:0em;
+	-webkit-border-bottom-right-radius:2em;
+	-webkit-border-bottom-left-radius:0em;
+	-moz-border-radius-topleft:2em;
+	-moz-border-radius-topright:0em;
+	-moz-border-radius-bottomright:2em;
+	-moz-border-radius-bottomleft:0em;
+	border-top-left-radius:2em;
+	border-top-right-radius:0em;
+	border-bottom-right-radius:2em;
+	border-bottom-left-radius:0em;
+}
 .highlight {
 	overflow-x: auto;
 	padding: 5px;
@@ -223,6 +241,24 @@ ul {
 	padding-top: 25px;
 	padding-bottom: 25px;
 }
+#article .content {
+	line-height: 31px;
+}
+
+#article .content a {
+	-moz-border-radius:15px; -webkit-border-radius:15px;
+	box-shadow: 0 1px 3px rgba(55,55,55,-.3), inset 0 1px 1px rgba(255,255,255,.3);
+	border-radius:5px;
+	background-color: #5B5B5B;
+	margin-right: 5px;
+	margin-left: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	padding: 5px;
+}
+#article .content a:hover {
+	box-shadow: 0 1px 3px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.5);
+}
 
 #article .content h1 {
 	color: #FFCC00;
@@ -306,8 +342,6 @@ ul {
 }
 #article img {
 	max-width : 100%;
-
-
 	-moz-box-shadow:0px 0px 11px #333333; -webkit-box-shadow:0px 0px 11px #333333; 		box-shadow:0px 0px 11px #333333;
 	margin-top: 11px;
 	margin-bottom: 11px;

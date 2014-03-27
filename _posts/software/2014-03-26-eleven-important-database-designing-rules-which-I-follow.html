@@ -20,10 +20,10 @@ title : 微软工程师建议的11条数据库设计准则
 <p>
 如果你对于“范式”没什么印象，可以点击<a href="http://www.youtube.com/watch?v=wp0N1tYjEWc&feature=youtu.be&hd=1">这里</a>。这篇视频教程手把手地教你“三范式”是怎么一回事。</p>
 
-<pre>
+<div class="quote">
 	<p><b>译者注：</b></p>
 	<p>视频教程贴在youtube，如果不翻墙可能看不到。如果不想翻墙，或者不想听英语，可以谷歌“数据库范式”。</p>
-</pre>
+</div>
 
 <p>
 说到底，“范式”是非常重要的准则，但是，奉为圭臬，则总归要吃亏。因此，我将列出我所认为数据库设计最重要的11条准则。</p>
@@ -97,7 +97,7 @@ developer们是一种可爱的生物。如果你告诉他们一种方法，他�
 
 <p>所以，我们还是要遵循第一范式的第二条：列不得存储多个值。我建立了一个 Syllabus 分表，并与主表建立了一个多对多的关系。</p>
 
-<p>用这种方法，在主表中，Syllabus 字段不在塞入重复内容，也看不见“分隔符”这种东西了。</p>
+<p>用这种方法，在主表中，Syllabus 字段不再塞入重复内容，也看不见“分隔符”这种东西了。</p>
 
 <h1>准则六：当心部分依赖</h1>
 <img src="/public/upload/images/important-database-designing-rules-which-I-follow-009.jpg" />
@@ -111,10 +111,10 @@ developer们是一种可爱的生物。如果你告诉他们一种方法，他�
 
 <h1>准则七：仔细选择推导列</h1>
 <img src="/public/upload/images/important-database-designing-rules-which-I-follow-010.jpg" />
-<pre>
+<div class="quote">
 <p><b>译者注：</b></p>
 <p>所谓推导列，指它的值依赖于同一个表的其他类。例如图中的 Averge，其实可以通过 Total Marks ÷ Total Subject 得到。</p>
-</pre>
+</div>
 <p>
 如果你是设计OLTP（事务型）数据库，那么，去掉推导列将是一个明智之举。除非性能要求十分紧迫。但对于OLAP（分析型）数据库而言，推导列就是必要的了。因为分析型数据库要进行大量的求和与统计操作。
 </p>
@@ -142,10 +142,11 @@ developer们是一种可爱的生物。如果你告诉他们一种方法，他�
 <img src="/public/upload/images/important-database-designing-rules-which-I-follow-014.jpg" />
 
 <p>这种情况下，更明智的方案是，用一个<b>集合表</b>存下这两个表的全部信息，并设立一个 Type 字段来区分值的类型。</p>
-<h1></h1>
+
+<h1>准则十一：为多级数据建立外键，或引用自身的主键</h1>
 <p>
-我也经常碰上那种无限层级的情况。例如，有一个多级营销方案，一个销售商下面还有很多很多销售商。这种情况下，引用自身的主键和使用外键，都可以得到相同的效果。</p>
+我也经常碰上那种多级情况。例如，有一个多级营销方案，一个销售商下面还有很多很多销售商。这种情况下，引用自身的主键和使用外键，都可以得到相同的效果。</p>
 <img src="/public/upload/images/important-database-designing-rules-which-I-follow-015.jpg" />
 
-<p>我之所以这么说，并非叫你不要遵循范式，而是叫你别盲目遵循就行了。首先，应该是确认你的项目的类型和你要处理的数据的类型。</p>
+<p>我之所以这么说，并非叫你不要遵循范式，而是叫你别盲目遵循就行了。首要考虑的，应该是确认你的项目的类型和你要处理的数据的类型。</p>
 <img src="/public/upload/images/important-database-designing-rules-which-I-follow-016.jpg" />
