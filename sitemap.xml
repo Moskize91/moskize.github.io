@@ -15,7 +15,7 @@ title : Sitemap
     {% endfor %}
     
     <url>
-      <loc>{{ site.production_url }}</loc>
+      <loc>http://taozeyu.com/</loc>
       <changefreq>daily</changefreq>
       <priority>0.6</priority>
     </url>
