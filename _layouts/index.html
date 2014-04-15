@@ -4,18 +4,21 @@
 		{% include header.html %}
 	</head>
 <body>
-	{% include titler.html %}
-	<div class="center">
-		<div id="post-list">
-		{% for post in paginator.posts %}
-			<div class="buble-container">
-				<div class="title"><a href="{{ post.url }}" target="_blank">{{ post.title }}</a></div>
-				<div class="content"><a href="{{ post.url }}" target="_blank">
-				{{ post.content | strip_html | truncate :200 }}
-				</a></div>
+    <div id="left-page">
+		<div class="blank"></div>
+	</div>
+	<div id="right-page"></div>
+    <div id="center-page">
+        {% include titler.html %}
+        <div id="article-list">
+        {% for post in paginator.posts %}
+            <div class="post">
+				<div class="title"><a href="{{ post.url }}">{{ post.title }}</a></div>
+				<div class="describe">{{ post.content | strip_html | truncate :200 }}</div>
 			</div>
 		{% endfor %}
-		<div id="pagination" class="button-box">
+        </div>
+        <div id="pagination" class="button-box">
 			{% if paginator.previous_page %}
 				{% if paginator.previous_page == 1 %}
 				<span class="click" onclick="clickButton('/');">&lt;&lt;</span>
@@ -40,13 +43,11 @@
 			<span class="disable">&gt;&gt;</span>
 			{% endif %}
 		</div>
-			<script>
-				function clickButton(url) {
-					window.location.href = url;
-				};
-			</script>
-		</div>
-	</div>
-	{% include footer.html %}
+        <script>
+            function clickButton(url) {
+                window.location.href = url;
+            };
+        </script>
+     </div>
 </body>
 </html>

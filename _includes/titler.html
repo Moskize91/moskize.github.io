@@ -1,15 +1,18 @@
-<div>
-	<div class="center">
-		<div id="website-logo">
-			<div id="website-name">MOsky的博客</div>
-			<div id="website-url"><a href="/">taozeyu.com</a></div>
-		</div>
-		<div id="website-root-nav">
-			<ul>
-				<li {% if page.belongs_to == "home" %}class="current"{% endif %}><a href="/">主页</a></li>
-				<li {% if page.belongs_to == "about" %}class="current"{% endif %}><a href="/about.html">关于我</a></li>
-			</ul>
-		</div>
-		<div style="clear:both;"></div>
-	</div>
+<div id="title">
+    <div class="title">MOsky的博客</div>
+    <div class="button">
+        {% if page.belongs_to == "home" %}
+            <span class="ele">主页</span>
+        {% else %}
+            <a href="/" class="ele">主页</a>
+        {% endif %}
+        {% if page.belongs_to == "about" %}
+            <span class="ele">关于我</span>
+        {% else %}
+            <a href="/about.html" class="ele">关于我</a>
+        {% endif %}
+        {% if page.belongs_to %}{% else %}
+            <span class="ele">文章内容</span>
+        {% endif %}
+    </div>
 </div>
