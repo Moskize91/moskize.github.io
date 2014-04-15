@@ -25,7 +25,6 @@
             {% if page.article_type == 'translation'%}
 			<div class="declare" ref="nofollow">翻译贴，{% if page.author %}原文作者{{ page.author }}，{% endif %}点击<a href="{{ page.source}}" target="_blank" >这里</a>查看原文。</div>
 			{% endif %}
-			<div class="title can-select">{{ page.title}}</div>
 			<div class="content can-select">
 			{{ content }}
 			</div>
@@ -49,45 +48,5 @@
             </div>
         </div>
     </div>
-</body>
-            
-	<div class="center">
-		{% include titler.html %}
-		<div id="article" class="buble-container">
-			{% if page.article_type == 'repost' %}
-			<div class="declare" ref="nofollow">本文属转载，{% if page.author %}作者{{ page.author }}，{% endif %}点击<a href="{{ page.source}}" target="_blank" >这里</a>查看原文。</div>
-			{% endif %}
-            {% if page.article_type == 'translation'%}
-			<div class="declare" ref="nofollow">翻译贴，{% if page.author %}原文作者{{ page.author }}，{% endif %}点击<a href="{{ page.source}}" target="_blank" >这里</a>查看原文。</div>
-			{% endif %}
-			<div class="title can-select">{{ page.title}}</div>
-			<div class="content can-select">
-			{{ content }}
-			</div>
-		</div>
-		<div id="article-index">
-			<div>
-			  <h4>文章索引</h4>
-			</div>
-		</div>
-		<div style="clear:both;"></div>
-		<div id="comments">
-		<!-- Duoshuo Comment BEGIN -->
-			<div class="ds-thread"></div>
-			<script type="text/javascript">
-				var duoshuoQuery = {short_name:"taozeyu"};
-				(function() {
-					var ds = document.createElement('script');
-					ds.type = 'text/javascript';ds.async = true;
-					ds.src = 'http://static.duoshuo.com/embed.js';
-					ds.charset = 'UTF-8';
-					(document.getElementsByTagName('head')[0] 
-					|| document.getElementsByTagName('body')[0]).appendChild(ds);
-				})();
-			</script>
-		</div>
-		<!-- Duoshuo Comment END -->
-	</div>
-	{% include footer.html %}
 </body>
 </html>
