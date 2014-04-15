@@ -1,4 +1,4 @@
-body {
+﻿body {
 	font-family: "微软雅黑", "黑体", "Lucida Grande";
 	margin: 0px;
 	padding: 0px;
@@ -172,7 +172,6 @@ ul {
 
 #article {
 	color: #333333;
-	text-shadow:1px 1px 1px #B3B3B3;
 	padding-top: 172px;
 	padding-right: 25px;
 	padding-bottom: 175px;
