@@ -288,6 +288,7 @@ ul {
 	box-shadow:1px 1px 2px #333333, inset 1px 1px 2px #DDDDDD;
 	color: #333333;
 	font-weight: bold;
+    padding-bottom: 185px;
 }
 #pagination .disable {
 	background-color: #CCCCCC;
