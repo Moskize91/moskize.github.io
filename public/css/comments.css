@@ -85,10 +85,10 @@
 #comments #ds-thread .ds-post-self p {
 	font-size: 16px;
 	color: #FFFFFF;
-	-moz-user-select: text; /*»ğºü*/
-    -webkit-user-select: text;  /*webkitä¯ÀÀÆ÷*/
+	-moz-user-select: text; /*ç«ç‹*/
+    -webkit-user-select: text;  /*webkitæµè§ˆå™¨*/
     -ms-user-select: text;   /*IE10*/
-    -khtml-user-select: text; /*ÔçÆÚä¯ÀÀÆ÷*/
+    -khtml-user-select: text; /*æ—©æœŸæµè§ˆå™¨*/
     user-select: text;
 }
 #comments #ds-thread .ds-powered-by a {
@@ -97,9 +97,9 @@
 }
 #comments #ds-thread.ds-user-name {
 	color: #FFFFFF;
-	-moz-user-select: text; /*»ğºü*/
-    -webkit-user-select: text;  /*webkitä¯ÀÀÆ÷*/
+	-moz-user-select: text; /*ç«ç‹*/
+    -webkit-user-select: text;  /*webkitæµè§ˆå™¨*/
     -ms-user-select: text;   /*IE10*/
-    -khtml-user-select: text; /*ÔçÆÚä¯ÀÀÆ÷*/
+    -khtml-user-select: text; /*æ—©æœŸæµè§ˆå™¨*/
     user-select: text;
 }
