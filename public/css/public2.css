@@ -277,6 +277,7 @@ ul {
 	color: #666666;
 }#pagination {
 	text-align: center;
+	padding-bottom: 45px;
 }
 #pagination span {
 	border-radius:10px;
@@ -288,7 +289,6 @@ ul {
 	box-shadow:1px 1px 2px #333333, inset 1px 1px 2px #DDDDDD;
 	color: #333333;
 	font-weight: bold;
-    padding-bottom: 185px;
 }
 #pagination .disable {
 	background-color: #CCCCCC;
