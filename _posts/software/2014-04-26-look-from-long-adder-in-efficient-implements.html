@@ -15,7 +15,7 @@ title : 从LongAdder看更高效的无锁实现
 <p>我们知道，AtomicLong已经是非常好的解决方案了，涉及并发的地方都是使用CAS操作，在硬件层次上去做 compare and set操作。效率非常高。</p>
 <p>因此，我决定研究下，为什么LongAdder比AtomicLong高效。</p>
 <p>首先，看LongAdder的继承树：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-001" width="431" height="104" /></p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-001.png" width="431" height="104" /></p>
 <p>继承自Striped64，这个类包装了一些很重要的内部类和操作。稍候会看到。</p>
 <p><span id="more-11454"></span></p>
 <p><strong>正式开始前，强调下，我们知道，AtomicLong的实现方式是内部有个value 变量，当多线程并发自增，自减时，均通过CAS 指令从机器指令级别操作保证并发的原子性。</strong></p>
