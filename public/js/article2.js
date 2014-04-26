@@ -8,6 +8,9 @@ $(function() {
         id++;
         index.append('<div><a href="#'+ head.attr('id')+'">'+head.html()+'</a></div>');
     });
+    if(id <= 0) {
+        index.html("<span style='margin-left: 24px;'>本文没有生成索引...</span>");
+    }
     content.find('a').each(function(){
         $(this).attr('target', '_blank').attr('ref', 'nofollow');
     });

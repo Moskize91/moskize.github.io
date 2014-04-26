@@ -1,224 +1,237 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html"; charset="utf-8" />
-<title>无标题文档</title>
-<script src="../public/js/yui3/yui/yui-min.js"></script>
-<script src="../public/js/article.js" type="text/javascript"></script>
-<link href="../public/css/public.css" rel="stylesheet" type="text/css" />
-<link href="../public/css/comments.css" rel="stylesheet" type="text/css" />
-<link href="../public/css/syntax.css" rel="stylesheet" type="text/css" />
-
-<!-- for fancyBox -->
+	<head>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<title>从LongAdder看更高效的无锁实现 - MOsky的博客</title>
 <script type="text/javascript" src="../public/lib/jquery-1.10.1.min.js"></script>
-<script type="text/javascript" src="../public/lib/jquery.mousewheel-3.0.6.pack.js"></script>
-<script type="text/javascript" src="../public/source/jquery.fancybox.js?v=2.1.5"></script>
-<link rel="stylesheet" type="text/css" href="../public/source/jquery.fancybox.css?v=2.1.5" media="screen" />
-<link rel="stylesheet" type="text/css" href="../public/source/helpers/jquery.fancybox-buttons.css?v=1.0.5" />
-<script type="text/javascript" src="../public/source/helpers/jquery.fancybox-buttons.js?v=1.0.5"></script>
-<link rel="stylesheet" type="text/css" href="../public/source/helpers/jquery.fancybox-thumbs.css?v=1.0.7" />
-<script type="text/javascript" src="../public/source/helpers/jquery.fancybox-thumbs.js?v=1.0.7"></script>
-<script type="text/javascript" src="../public/source/helpers/jquery.fancybox-media.js?v=1.0.6"></script>
-<!-- end fancyBox -->
+<script src="../public/js/resize.js" type="text/javascript"></script>
+<link href="../public/css/syntax.css" rel="stylesheet" type="text/css" />
+<link href="../public/css/public2.css" rel="stylesheet" type="text/css" />
 
-</head>
+<META NAME="Title" CONTENT="从LongAdder看更高效的无锁实现">
 
+
+<META NAME="Author" CONTENT="刘锟洋">
+
+
+<META NAME="Copyright" CONTENT="taozeyu.com">
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-49110461-1', 'taozeyu.com');
+  ga('send', 'pageview');
+
+</script>
+        <script src="../public/js/article2.js" type="text/javascript"></script>
+	</head>
 <body>
-	<div class="center">
-		<div>
-	<div class="center">
-		<div id="website-logo">
-			<div id="website-name">MOsky的博客</div>
-			<div id="website-url"><a href="/">taozeyu.com</a></div>
-		</div>
-		<div id="website-root-nav">
-			<ul>
-				<li ><a href="/">主页</a></li>
-				<li ><a href="/about.html">关于我</a></li>
-			</ul>
-		</div>
-		<div style="clear:both;"></div>
+    <div id="left-page">
+		<div class="blank"></div>
 	</div>
+	<div id="right-page">
+		<div id="index">
+			<div class="title">目录</div>
+			<div class="list">
+			</div>
+		</div>
+    </div>
+    <div id="center-page">
+        <div id="title">
+    <div class="title">MOsky的博客</div>
+    <div class="button">
+        
+            <a href="/" class="ele">主页</a>
+        
+        
+            <a href="/about.html" class="ele">关于我</a>
+        
+        
+            <span class="ele">文章内容</span>
+        
+    </div>
 </div>
-		<div id="article" class="buble-container">
+        <div id="article" class="buble-container">
+            <div class="title can-select">从LongAdder看更高效的无锁实现</div>
 			
-			<div class="declare" ref="nofollow">翻译贴，原文作者ShivprasadKoirala，点击<a href="http://www.codeproject.com/Articles/359654/" target="_blank" >这里</a>查看原文。</div>
+			<div class="declare" ref="nofollow">本文属转载，作者刘锟洋，点击<a href="http://www.liuinsect.com/2014/04/15/%E6%AF%94atomiclong%E8%BF%98%E9%AB%98%E6%95%88%E7%9A%84longadder-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" target="_blank" >这里</a>查看原文。</div>
 			
-			<div class="title can-select">微软工程师建议的11条数据库设计准则</div>
+            
 			<div class="content can-select">
-			<h1>简介</h1>
-<p>作者：Shivprasad koirala</p>
-<p>前微软ASP/ASP.NET的MVC工程师，现在印度当CEO。如果你认为本文有些地方翻译不准确，可以去<a href="http://115.29.175.42/post/8">译译网对应的贴子</a>参与本贴的翻译。</p>
-
-<h1>引言</h1>
-
-<p>在你开始读这篇文章之前，我可要事先声明，我可不是什么数据库设计方面的大师什么的。这11条设计准则，都是我从实际项目中，从经验中，从阅读和学习之中总结而来的。我个人认为，如我来设计数据库，遵循这11条准则，会让我受益良多。请多指教。</p>
-
-<p>
-我之所以要写这么一篇详尽的文章，那是因为，我发现很多developer对“三范式”笃信不疑，而不顾自己的实际情况如何。他们认为，“三范式”就是数据库设计的唯一选项！随着项目进度不断推进，这些抱着这种观点的人，终归会碰壁的。</p>
-
-<p>
-如果你对于“范式”没什么印象，可以点击<a href="http://www.youtube.com/watch?v=wp0N1tYjEWc&feature=youtu.be&hd=1">这里</a>。这篇视频教程手把手地教你“三范式”是怎么一回事。</p>
-
-<div class="quote">
-	<p><b>译者注：</b></p>
-	<p>视频教程贴在youtube，如果不翻墙可能看不到。如果不想翻墙，或者不想听英语，可以谷歌“数据库范式”。</p>
-</div>
-
-<p>
-说到底，“范式”是非常重要的准则，但是，奉为圭臬，则总归要吃亏。因此，我将列出我所认为数据库设计最重要的11条准则。</p>
-
-<h1>准则一：应用的类型是什么？是OLTP还是OLAP？</h1>
-
-<p>
-当你开始设计数据库的时候，第一件事，就是分析，你设计的数据库，是为那种类型的数据库提供服务的。具体来说，到底是<b>事务型</b>（Transactional）还是<b>分析型</b>（Analytical）。你可以发现，很多developer根本就不管自己的应用到底是那种类型，就直接按照“范式”的规定设计，最终，碰上了各种各样的性能、用户化问题。正如所说，有两种应用类型：基于事务的、基于分析的。让我来简单地介绍下这两种类型。</p>
-
-<p><b>事务型：</b>
-这种类型的应用程序，最终用户更专注增删查改操作。这种类型叫做<b>OLTP</b>。
-</p>
-
-<p><b>分析型：</b>
-这种类型的应用程序，最终用户更专注于对数据库存储的数据进行分析，并生成报告和进行预测。这时，数据库很少需要执行insert和remove操作。设计的主要目的，在于以最快的速度从数据库取数据，并进行分析。这种类型叫做<b>OLAP</b>。
-</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-001.jpg" />
-
-<p>
-换句话说，如果你发现，增删改操作更加突出，那么你应该遵循传统的“范式”来设计。否则，你就建立一个扁平化非规范数据库结构吧。</p>
-
-<p>
-下图表示name和adress的关系结构。左边是遵循范式的设计方案，右边是不遵循范式的扁平化设计方案。
-</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-002.jpg" />
-
-<h1>准则二：将数据拆分成逻辑片段，生活本该更简单。</h1>
-<p>
-这条准则，实际上就是“第一范式”。如果你违反这条准则，一个显而易见的特征就是，你的查询中会用到很多字符串解析函数，像substring、charindex等等。如果不幸出现了这些特征，请尽量遵循这条准则吧。</p>
-
-<p>
-举个例子，如下图。表中包含 Student Name 字段。如果你想在该表中查询包含“Koirala”，但是不包含“Harisingh”的内容，你会怎么做呢？（很纠结吧）</p>
-
-<p>
-所以，如果你把 Student Name 按逻辑进一步拆分，这显然要好一些。这样，写出的查询语句也就更简洁、更优雅。</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-003.jpg" />
-
-<h1>准则三：上一条准则别玩过头了</h1>
-<p>
-developer们是一种可爱的生物。如果你告诉他们一种方法，他们就老是用这种方法。好吧，其实准则二如果玩过头了，也会导致一些你不想要的结果。因此，当你产生“拆了这玩意吧”的想法的时候，赶紧暂停，然后问自己一个问题：“有必要吗？”。正如之前所说，拆解必须是符合逻辑的。（译者：即业务逻辑上有简化的需求，你才去拆分。如果业务逻辑没需求，你也拆分就是过度设计。）</p>
-
-<p>
-如图，请看 Phone Number 字段。一般来说，号码就是号码，很少有业务需要对号码的 ISD（译者注：ISD - 国际订户拨号）进行管理。把号码留着不拆解显然是明智之举，你要真把号码拆解成图中那样，恐怕会产生很多麻烦的后遗症。</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-004.jpg" />
-
-<h1>准则四：冗余的不规范数据是你的敌人</h1>
-<p>
-警惕冗余数据，并重构这些数据。我本人才不会因为冗余数据占用磁盘空间而为之担忧，冗余数据麻烦的地方在于“制造混乱”！</p>
-
-<p>例如下图中，你可以看到 5th Standard 和 Fifth standard ，两者是相同信息的不同表述。这种数据叫你怎么查？好吧，你可能会说，之所以数据库中冒出这种东西，谁叫他乱录入，而且又没有校验机制。但如果你用这种数据生成一份报告，对于 sth Standard 会生成两份不同东西，看到这种报告，用户恐怕就凌乱了。</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-005.jpg" />
-
-<p>一个解决方案就是：把 Standard 的所有内容全部转移到另外一个完全不同的表中，而原来 Standard 的位置用外键引用。如图，这个新表叫做Standards，通过一个简单的外键与原来的表连接起来。</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-006.jpg" />
-
-<h1>准则五：小心那些用分隔符分割的数据</h1>
-<p>
-第一范式的第二条说：数据库每一列不能存储<b>多个值</b>。如图展示的就是让数据库列存储多个值的例子。仔细看看 Syllabus 字段，这个字段被塞满了很多数据。这种字段被称为重复组（Repeating groups）。如果来操作这种数据，查询语句会很复杂，并且我也要怀疑查询的性能如何了。</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-007.jpg" />
-
-<p>这种一眼看上去，列中塞满了分隔符的数据必须要特别认真对待。为了更好的数据管理，最好把这种列全部转移到令一个表，然后通过外键与原表建立联系。</p>
-
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-008.jpg" />
-
-<p>所以，我们还是要遵循第一范式的第二条：列不得存储多个值。我建立了一个 Syllabus 分表，并与主表建立了一个多对多的关系。</p>
-
-<p>用这种方法，在主表中，Syllabus 字段不在塞入重复内容，也看不见“分隔符”这种东西了。</p>
-
-<h1>准则六：当心部分依赖</h1>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-009.jpg" />
-<p>
-注意这些<b>部分依赖</b>主键的字段。如图，主键是（Roll Number，Standard）。这张表中，Syllabus 部分依赖于 Standard。注意 Syllabus 字段：Syllabus 通过 Standard 联系起来，而不是通过 Student 直接联系起来。
-</p>
-
-<p>倘若 Syllabus 直接与 Student本身联系，那么，倘若某一天，我想要更新某个 Syllabus 字段，我必须将与之对应的所有 Student 更新一次。这既麻烦，也毫无逻辑。因此，把 Syllabus 独立一个表出来，并与 Standard 而不是 Sudent 联系起来，这样更有意义。</p>
-
-<p>这条准则其实就是“第二范式”的表述：<b>全部属性必须完全依赖主键，不可以部分依赖主键</b>。</p>
-
-<h1>准则七：仔细选择推导列</h1>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-010.jpg" />
-<pre>
-<p><b>译者注：</b></p>
-<p>所谓推导列，指它的值依赖于同一个表的其他类。例如图中的 Averge，其实可以通过 Total Marks ÷ Total Subject 得到。</p>
-</pre>
-<p>
-如果你是设计OLTP（事务型）数据库，那么，去掉推导列将是一个明智之举。除非性能要求十分紧迫。但对于OLAP（分析型）数据库而言，推导列就是必要的了。因为分析型数据库要进行大量的求和与统计操作。
-</p>
-
-<p>如上图，我们可以看到，Averge 依赖 Total Marks 和 Total Subject 的值。这就是一种冗余的形式。因此，碰到这种依赖、并由其他列推导而出的字段时，想一想：“这是必要的吗？”。</p>
-
-<p>
-这条准则其实就如“第三范式”所说：<b>属性不得依赖其他非主属性</b>。我个人认为，别盲目追从第三范式，要视情况而定。数据还是要有冗余的。如果冗余数据是通过计算得来的，就视情况而定，判断是否要遵守第三范式。</p>
-
-<h1>准则八：如果性能是关键，有点冗余也没什么。</h1>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-011.jpg" />
-<p>
-你有没有严格执行“避免冗余”这条命令？要是性能问题很紧迫呢？想不想考虑一下非标准方案？用标准方案，你通常要大量使用连接操作。而非标准方案却可以减少连接操作——通过增加冗余。
-</p>
-
-<h1>准则九：多维数据是一种完全不同的野兽</h1>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-012.jpg" />
-<p>OLAP 项目主要处理多维数据。如图，就需要知道每个国家、顾客、某年某月的销量。简单来说，所关注的“销量”是三个维度的数据的交集。</p>
-
-<p>这种情况下，最好设计成一维的情况。简单说来，就是建一个中心表来存储销量（通过设置一个Sales的字段）。然后将其他维度的信息作为副表，并通过外键与中心表建立联系。</p>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-013.jpg" />
-
-<h1>准则十：使用集合设计处理键-值表</h1>
-<p>我经常遇到的另一种表叫键-值表。它存储着<b>键</b>和与键对应的<b>值</b>。如下图的 Currency 和 Country 表，仔细看看，这两张表其实仅仅包含键和值罢了。</p>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-014.jpg" />
-
-<p>这种情况下，更明智的方案是，用一个<b>集合表</b>存下这两个表的全部信息，并设立一个 Type 字段来区分值的类型。</p>
-<h1></h1>
-<p>
-我也经常碰上那种无限层级的情况。例如，有一个多级营销方案，一个销售商下面还有很多很多销售商。这种情况下，引用自身的主键和使用外键，都可以得到相同的效果。</p>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-015.jpg" />
-
-<p>我之所以这么说，并非叫你不要遵循范式，而是叫你别盲目遵循就行了。首先，应该是确认你的项目的类型和你要处理的数据的类型。</p>
-<img src="/public/upload/images/important-database-designing-rules-which-I-follow-016.jpg" />
+			<p>接触到AtomicLong的原因是在看guava的LoadingCache相关代码时，关于LoadingCache，其实思路也非常简单清晰：用模板模式解决了缓存不命中时获取数据的逻辑，这个思路我早前也正好在项目中使用到。</p>
+<p>言归正传，为什么说LongAdder引起了我的注意，原因有二：</p>
+<ol>
+<li>作者是Doug lea ，地位实在举足轻重。</li>
+<li>他说这个比AtomicLong高效。</li>
+</ol>
+<p>我们知道，AtomicLong已经是非常好的解决方案了，涉及并发的地方都是使用CAS操作，在硬件层次上去做 compare and set操作。效率非常高。</p>
+<p>因此，我决定研究下，为什么LongAdder比AtomicLong高效。</p>
+<p>首先，看LongAdder的继承树：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-001.png" width="431" height="104" /></p>
+<p>继承自Striped64，这个类包装了一些很重要的内部类和操作。稍候会看到。</p>
+<p><span id="more-11454"></span></p>
+<p><strong>正式开始前，强调下，我们知道，AtomicLong的实现方式是内部有个value 变量，当多线程并发自增，自减时，均通过CAS 指令从机器指令级别操作保证并发的原子性。</strong></p>
+<p>再看看LongAdder的方法：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-002.png" width="472" height="436" /><br />
+怪不得可以和AtomicLong作比较，连API都这么像。我们随便挑一个API入手分析，这个API通了，其他API都大同小异，因此，我选择了add这个方法。事实上,其他API也都依赖这个方法。</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-003.png" width="701" height="281" /><br />
+LongAdder中包含了一个Cell 数组，Cell是Striped64的一个内部类，顾名思义，Cell 代表了一个最小单元，这个单元有什么用，稍候会说道。先看定义：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-004.png" width="686" height="649" /><br />
+Cell内部有一个非常重要的value变量，并且提供了一个CAS更新其值的方法。</p>
+<p>回到add方法：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-005.png" width="701" height="281" /></p>
+<p>这里，我有个疑问，AtomicLong已经使用CAS指令，非常高效了（比起各种锁），LongAdder如果还是用CAS指令更新值，怎么可能比AtomicLong高效了？ 何况内部还这么多判断！！！</p>
+<p>这是我开始时最大的疑问，所以，我猜想，难道有比CAS指令更高效的方式出现了？ 带着这个疑问，继续。</p>
+<p>第一if 判断，第一次调用的时候cells数组肯定为null,因此，进入casBase方法：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-006.png" width="772" height="81" /><br />
+原子更新base没啥好说的，如果更新成功，本地调用开始返回，否则进入分支内部。</p>
+<p>什么时候会更新失败？ 没错，并发的时候，好戏开始了，AtomicLong的处理方式是死循环尝试更新，直到成功才返回，而LongAdder则是进入这个分支。</p>
+<p>分支内部，通过一个Threadlocal变量threadHashCode 获取一个HashCode对象，该HashCode对象依然是Striped64类的内部类，看定义：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-007.png" width="734" height="203" /><br />
+有个code变量，保存了一个非0的随机数随机值。</p>
+<p>回到add方法：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-008.png" width="701" height="281" /></p>
+<p>拿到该线程相关的HashCode对象后，获取它的code变量，as[(n-1)&amp;h] 这句话相当于对h取模，只不过比起取模，因为是 与 的运算所以效率更高。</p>
+<p>计算出一个在Cells 数组中当先线程的HashCode对应的 索引位置，并将该位置的Cell 对象拿出来用CAS更新它的value值。</p>
+<p>当然，如果as 为null 并且更新失败，才会进入retryUpdate方法。</p>
+<p>看到这里我想应该有很多人明白为什么LongAdder会比AtomicLong更高效了，没错，唯一会制约AtomicLong高效的原因是高并发，高并发意味着CAS的失败几率更高， 重试次数更多，越多线程重试，CAS失败几率又越高，变成恶性循环，AtomicLong效率降低。 那怎么解决？<strong> LongAdder给了我们一个非常容易想到的解决方案：减少并发，将单一value的更新压力分担到多个value中去，降低单个value的 “热度”，分段更新！！！</strong></p>
+<p>这样，线程数再多也会分担到多个value上去更新，只需要增加value就可以降低 value的 “热度”  AtomicLong中的 恶性循环不就解决了吗？ cells 就是这个 “段” cell中的value 就是存放更新值的， 这样，<strong>当我需要总数时，把cells 中的value都累加一下不就可以了么！！</strong></p>
+<p><strong>当然，聪明之处远远不仅仅这里，在看看add方法中的代码，casBase方法可不可以不要，直接分段更新,上来就计算 索引位置，然后更新value？</strong></p>
+<p>答案是不好，不是不行，因为，casBase操作等价于AtomicLong中的CAS操作，要知道，LongAdder这样的处理方式是有坏处的，分段操作必然带来空间上的浪费，可以空间换时间，但是，<strong>能不换就不换，看空间时间都节约~！</strong> 所以，<strong>casBase操作保证了在低并发时，不会立即进入分支做分段更新操作</strong>，因为低并发时，casBase操作基本都会成功，只有并发高到一定程度了，才会进入分支，所以，Doug Lea对该类的说明是：<strong> 低并发时LongAdder和AtomicLong性能差不多，高并发时LongAdder更高效！</strong></p>
+<p ><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-009.png" width="750" height="331" /></p>
+<p>但是，Doung Lea 还是没这么简单，聪明之处还没有结束&#8230;&#8230;</p>
+<p>如此，retryUpdate中做了什么事，也基本略知一二了，因为cell中的value都更新失败(说明该索引到这个cell的线程也很多，并发也很高时) 或者cells数组为空时才会调用retryUpdate,</p>
+<p>因此，<strong>retryUpdate里面应该会做两件事：</strong></p>
+<ol>
+<li><strong>扩容，将cells数组扩大</strong>，降低每个cell的并发量，同样，这也意味着cells数组的rehash动作。</li>
+<li> <strong>给空的cells变量赋一个新的Cell数组</strong>。</li>
+</ol>
+<p>是不是这样呢？ 继续看代码：</p>
+<p>代码比较长，变成文本看看，为了方便大家看if else 分支，对应的  { } 我用相同的颜色标注出来。可以看到，这个时候Doug Lea才愿意使用死循环保证更新成功~！</p>
+<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">retryUpdate</span><span class="o">(</span><span class="kt">long</span> <span class="n">x</span><span class="o">,</span> <span class="n">HashCode</span> <span class="n">hc</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">wasUncontended</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno"> 2</span>       <span class="kt">int</span> <span class="n">h</span> <span class="o">=</span> <span class="n">hc</span><span class="o">.</span><span class="na">code</span><span class="o">;</span>
+<span class="lineno"> 3</span>       <span class="kt">boolean</span> <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>                <span class="c1">// True if last slot nonempty</span>
+<span class="lineno"> 4</span>       <span class="k">for</span> <span class="o">(;;)</span> <span class="o">{</span>
+<span class="lineno"> 5</span>           <span class="n">Cell</span><span class="o">[]</span> <span class="n">as</span><span class="o">;</span> <span class="n">Cell</span> <span class="n">a</span><span class="o">;</span> <span class="kt">int</span> <span class="n">n</span><span class="o">;</span> <span class="kt">long</span> <span class="n">v</span><span class="o">;</span>
+<span class="lineno"> 6</span>           <span class="k">if</span> <span class="o">((</span><span class="n">as</span> <span class="o">=</span> <span class="n">cells</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">n</span> <span class="o">=</span> <span class="n">as</span><span class="o">.</span><span class="na">length</span><span class="o">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span><span class="c1">// 分支1</span>
+<span class="lineno"> 7</span>               <span class="k">if</span> <span class="o">((</span><span class="n">a</span> <span class="o">=</span> <span class="n">as</span><span class="o">[(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">&amp;</span> <span class="n">h</span><span class="o">])</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno"> 8</span>                   <span class="k">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>            <span class="c1">// Try to attach new Cell</span>
+<span class="lineno"> 9</span>                       <span class="n">Cell</span> <span class="n">r</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>   <span class="c1">// Optimistically create</span>
+<span class="lineno">10</span>                       <span class="k">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">casBusy</span><span class="o">())</span> <span class="o">{</span>
+<span class="lineno">11</span>                           <span class="kt">boolean</span> <span class="n">created</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="lineno">12</span>                           <span class="k">try</span> <span class="o">{</span>               <span class="c1">// Recheck under lock</span>
+<span class="lineno">13</span>                               <span class="n">Cell</span><span class="o">[]</span> <span class="n">rs</span><span class="o">;</span> <span class="kt">int</span> <span class="n">m</span><span class="o">,</span> <span class="n">j</span><span class="o">;</span>
+<span class="lineno">14</span>                               <span class="k">if</span> <span class="o">((</span><span class="n">rs</span> <span class="o">=</span> <span class="n">cells</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span>
+<span class="lineno">15</span>                                       <span class="o">(</span><span class="n">m</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="na">length</span><span class="o">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span>
+<span class="lineno">16</span>                                       <span class="n">rs</span><span class="o">[</span><span class="n">j</span> <span class="o">=</span> <span class="o">(</span><span class="n">m</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">&amp;</span> <span class="n">h</span><span class="o">]</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno">17</span>                                   <span class="n">rs</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">r</span><span class="o">;</span>
+<span class="lineno">18</span>                                   <span class="n">created</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="lineno">19</span>                               <span class="o">}</span>
+<span class="lineno">20</span>                           <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="lineno">21</span>                               <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="lineno">22</span>                           <span class="o">}</span>
+<span class="lineno">23</span>                           <span class="k">if</span> <span class="o">(</span><span class="n">created</span><span class="o">)</span>
+<span class="lineno">24</span>                               <span class="k">break</span><span class="o">;</span>
+<span class="lineno">25</span>                           <span class="k">continue</span><span class="o">;</span>           <span class="c1">// Slot is now non-empty</span>
+<span class="lineno">26</span>                       <span class="o">}</span>
+<span class="lineno">27</span>                   <span class="o">}</span>
+<span class="lineno">28</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="lineno">29</span>               <span class="o">}</span>
+<span class="lineno">30</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(!</span><span class="n">wasUncontended</span><span class="o">)</span>       <span class="c1">// CAS already known to fail</span>
+<span class="lineno">31</span>                   <span class="n">wasUncontended</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>      <span class="c1">// Continue after rehash</span>
+<span class="lineno">32</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">cas</span><span class="o">(</span><span class="n">v</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="na">value</span><span class="o">,</span> <span class="n">fn</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">x</span><span class="o">)))</span>
+<span class="lineno">33</span>                   <span class="k">break</span><span class="o">;</span>
+<span class="lineno">34</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">NCPU</span> <span class="o">||</span> <span class="n">cells</span> <span class="o">!=</span> <span class="n">as</span><span class="o">)</span>
+<span class="lineno">35</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>            <span class="c1">// At max size or stale</span>
+<span class="lineno">36</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(!</span><span class="n">collide</span><span class="o">)</span>
+<span class="lineno">37</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="lineno">38</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">casBusy</span><span class="o">())</span> <span class="o">{</span>
+<span class="lineno">39</span>                   <span class="k">try</span> <span class="o">{</span>
+<span class="lineno">40</span>                       <span class="k">if</span> <span class="o">(</span><span class="n">cells</span> <span class="o">==</span> <span class="n">as</span><span class="o">)</span> <span class="o">{</span>      <span class="c1">// Expand table unless stale</span>
+<span class="lineno">41</span>                           <span class="n">Cell</span><span class="o">[]</span> <span class="n">rs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">[</span><span class="n">n</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="o">];</span>
+<span class="lineno">42</span>                           <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span>
+<span class="lineno">43</span>                               <span class="n">rs</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">as</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="lineno">44</span>                           <span class="n">cells</span> <span class="o">=</span> <span class="n">rs</span><span class="o">;</span>
+<span class="lineno">45</span>                       <span class="o">}</span>
+<span class="lineno">46</span>                   <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="lineno">47</span>                       <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="lineno">48</span>                   <span class="o">}</span>
+<span class="lineno">49</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="lineno">50</span>                   <span class="k">continue</span><span class="o">;</span>                   <span class="c1">// Retry with expanded table</span>
+<span class="lineno">51</span>               <span class="o">}</span>
+<span class="lineno">52</span>               <span class="n">h</span> <span class="o">^=</span> <span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">13</span><span class="o">;</span>                   <span class="c1">// Rehash  h ^= h &gt;&gt;&gt; 17;</span>
+<span class="lineno">53</span>               <span class="n">h</span> <span class="o">^=</span> <span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">5</span><span class="o">;</span>
+<span class="lineno">54</span>           <span class="o">}</span>
+<span class="lineno">55</span>           <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">cells</span> <span class="o">==</span> <span class="n">as</span> <span class="o">&amp;&amp;</span> <span class="n">casBusy</span><span class="o">())</span> <span class="o">{</span><span class="c1">//分支2</span>
+<span class="lineno">56</span>               <span class="kt">boolean</span> <span class="n">init</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="lineno">57</span>               <span class="k">try</span> <span class="o">{</span>                           <span class="c1">// Initialize table</span>
+<span class="lineno">58</span>                   <span class="k">if</span> <span class="o">(</span><span class="n">cells</span> <span class="o">==</span> <span class="n">as</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno">59</span>                       <span class="n">Cell</span><span class="o">[]</span> <span class="n">rs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">[</span><span class="mi">2</span><span class="o">];</span>
+<span class="lineno">60</span>                       <span class="n">rs</span><span class="o">[</span><span class="n">h</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
+<span class="lineno">61</span>                       <span class="n">cells</span> <span class="o">=</span> <span class="n">rs</span><span class="o">;</span>
+<span class="lineno">62</span>                       <span class="n">init</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="lineno">63</span>                   <span class="o">}</span>
+<span class="lineno">64</span>               <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="lineno">65</span>                   <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="lineno">66</span>               <span class="o">}</span>
+<span class="lineno">67</span>               <span class="k">if</span> <span class="o">(</span><span class="n">init</span><span class="o">)</span>
+<span class="lineno">68</span>                   <span class="k">break</span><span class="o">;</span>
+<span class="lineno">69</span>           <span class="o">}</span>
+<span class="lineno">70</span>           <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">casBase</span><span class="o">(</span><span class="n">v</span> <span class="o">=</span> <span class="n">base</span><span class="o">,</span> <span class="n">fn</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">x</span><span class="o">)))</span>
+<span class="lineno">71</span>               <span class="k">break</span><span class="o">;</span>                          <span class="c1">// Fall back on using base</span>
+<span class="lineno">72</span>       <span class="o">}</span>
+<span class="lineno">73</span>       <span class="n">hc</span><span class="o">.</span><span class="na">code</span> <span class="o">=</span> <span class="n">h</span><span class="o">;</span>                            <span class="c1">// Record index for next time</span>
+<span class="lineno">74</span>   <span class="o">}</span>
+</code></pre></div>
+<p>分支2中，为cells为空的情况，需要new 一个Cell数组。</p>
+<p>分支1分支中，略复杂一点点：</p>
+<p>注意，几个分支中都提到了busy这个方法，这个可以理解为一个CAS实现的锁，只有在需要更新cells数组的时候才会更新该值为1，如果更新失败，则说明当前有线程在更新cells数组，当前线程需要等待。重试。</p>
+<p>回到分支1中，这里首先判断当前cells数组中的索引位置的cell元素是否为空，如果为空，则添加一个cell到数组中。</p>
+<p>否则更新 标示冲突的标志位wasUncontended 为 true ，重试。</p>
+<p>否则，再次更新cell中的value,如果失败，重试。</p>
+<p>。。。。。。。一系列的判断后<span>，如果还是失败，下下下策，reHash,直接将cells数组扩容一倍，并更新当前线程的hash值，保证下次更新能尽可能成功。</span></p>
+<p><strong>可以看到，LongAdder确实用了很多心思减少并发量，并且，每一步都是在”没有更好的办法“的时候才会选择更大开销的操作，从而尽可能的用最最简单的办法去完成操作。追求简单，但是绝对不粗暴。</strong></p>
+<p>———————<strong>陈皓注————————</strong></p>
+<p>最后留给大家思考的两个问题：</p>
+<p>1）是不是AtomicLong可以被废了？</p>
+<p>2）如果cell被创建后，原来的casBase就不走了，会不会性能更差？</p>
+<p>———————liuinsect<strong>注————————</strong></p>
+<p>昨天和左耳朵耗子简单讨论了下，发现左耳朵耗子,耗哥对读者思维的引导还是非常不错的，在第一次发现这个类后，对里面的实现又提出了更多的问题，引导大家思考，值得学习。</p>
+<p>我们 发现的问题有这么几个（包括以上的问题），自己简单总结下，欢迎大家讨论：</p>
+<p>1. jdk 1.7中是不是有这个类？<br />
+我确认后，结果如下：    jdk-7u51 版本上还没有  但是jdk-8u20版本上已经有了。代码基本一样 ，增加了对double类型的支持和删除了一些冗余的代码。有兴趣的同学可以去下载下JDK 1.8看看</p>
+<p>2. base有没有参与汇总？<br />
+base在调用intValue等方法的时候是会汇总的：</p>
+<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-010.bmp" /></p>
+<p>3. 如果cell被创建后，原来的casBase就不走了，会不会性能更差？ base的顺序可不可以调换?<br />
+<span>    刚开始我想可不可以调换add方法中的判断顺序，比如，先做casBase的判断？ 仔细思考后认为还是 不调换可能更好，调换后每次都要CAS一下，在高并发时，失败几率非常高，并且是恶性循环，比起一次判断，后者的开销明显小很多，还没有副作用（上一个问题，base变量在sum时base是会被统计的，并不会丢掉base的值）。因此，不调换可能会更好。</span></p>
+<p>4. AtomicLong可不可以废掉？<br />
+我的想法是可以废掉了，因为，虽然LongAdder在空间上占用略大，但是，它的性能已经足以说明一切了,无论是从节约空的角度还是执行效率上，AtomicLong基本没有优势了，具体看这个测试（感谢<a rel="external nofollow">Lemon</a>的回复）</p>
 			</div>
-		</div>
-		<div id="article-index">
-			<div>
-			  <h4>文章索引</h4>
+			<div class="statement">
+				<p>你正阅读的这篇文章版权归 <a href="http://taozeyu.com" target="_blank">taozeyu.com</a> 所有。</p>
+				<p>转载请注明出处为 <a href="http://taozeyu.com" target="_blank">MOsky的博客</a> ，请勿用作商业用途。</p>
 			</div>
-		</div>
-		<div style="clear:both;"></div>
-		<div id="comments">
-		<!-- Duoshuo Comment BEGIN -->
-			<div class="ds-thread"></div>
-			<script type="text/javascript">
-				var duoshuoQuery = {short_name:"taozeyu"};
-				(function() {
-					var ds = document.createElement('script');
-					ds.type = 'text/javascript';ds.async = true;
-					ds.src = 'http://static.duoshuo.com/embed.js';
-					ds.charset = 'UTF-8';
-					(document.getElementsByTagName('head')[0] 
-					|| document.getElementsByTagName('body')[0]).appendChild(ds);
-				})();
-			</script>
-		</div>
-		<!-- Duoshuo Comment END -->
-	</div>
-	<div class="footer">
-	<div class="center">
-		<div>Mosky的博客</div>
-		<div>xiangtantaozeyu@gmail.com</div>
-	</div>
-</div>
+            <div id="comments">
+            <!-- Duoshuo Comment BEGIN -->
+                <div class="ds-thread"></div>
+                <script type="text/javascript">
+                    var duoshuoQuery = {short_name:"taozeyu"};
+                    (function() {
+                        var ds = document.createElement('script');
+                        ds.type = 'text/javascript';ds.async = true;
+                        ds.src = 'http://static.duoshuo.com/embed.js';
+                        ds.charset = 'UTF-8';
+                        (document.getElementsByTagName('head')[0] 
+                        || document.getElementsByTagName('body')[0]).appendChild(ds);
+                    })();
+                </script>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

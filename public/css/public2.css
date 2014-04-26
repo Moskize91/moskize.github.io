@@ -255,6 +255,24 @@ ul {
 	padding-left: 15px;
 	background-color: #E7EDFA;
 }
+#article .statement {
+	max-width: 525px;
+	background-color: #DFDFDF;
+	border-radius:2em;
+	box-shadow:2px 2px 5px #333333;
+	padding-top: 22px;
+	padding-right: 46px;
+	padding-bottom: 22px;
+	padding-left: 46px;
+	margin-right: auto;
+	margin-left: auto;
+	font-size: 19px;
+	margin-top: 87px;
+	margin-bottom: 87px;
+}
+#article .statement a {
+	font-weight: bold;
+}
 #article-list {
 	padding-top: 75px;
 	padding-bottom: 185px;

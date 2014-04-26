@@ -28,6 +28,15 @@
 			<div class="content can-select">
 			{{ content }}
 			</div>
+            <div class="statement">
+                {% if page.article_type %}
+                <p>本站所转载、翻译的文章版权归原作者所有。</p>
+                <p>但转载翻译文章的中文版本请注明出处为 <a href="http://taozeyu.com" target="_blank">MOsky的博客</a>。</p>
+                {% else %}
+				<p>你正阅读的这篇文章版权归 <a href="http://taozeyu.com" target="_blank">taozeyu.com</a> 所有。</p>
+				<p>转载请注明出处为 <a href="http://taozeyu.com" target="_blank">MOsky的博客</a> ，请勿用作商业用途。</p>
+                {% endif %}
+			</div>
             <div id="comments">
             <!-- Duoshuo Comment BEGIN -->
                 <div class="ds-thread"></div>
