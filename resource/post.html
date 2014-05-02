@@ -1,21 +1,18 @@
-
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
-<title>从LongAdder看更高效的无锁实现 - MOsky的博客</title>
-<script type="text/javascript" src="../public/lib/jquery-1.10.1.min.js"></script>
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>ECMAScript 6，令Node.js也可以写出同步执行的代码（上） - MOsky的博客</title>
+<script async="" src="//www.google-analytics.com/analytics.js"></script><script type="text/javascript" src="../public/lib/jquery-1.10.1.min.js"></script>
 <script src="../public/js/resize.js" type="text/javascript"></script>
-<link href="../public/css/syntax.css" rel="stylesheet" type="text/css" />
-<link href="../public/css/public2.css" rel="stylesheet" type="text/css" />
+<link href="../public/css/syntax.css" rel="stylesheet" type="text/css">
+<link href="../public/css/public2.css" rel="stylesheet" type="text/css">
 
-<META NAME="Title" CONTENT="从LongAdder看更高效的无锁实现">
-
-
-<META NAME="Author" CONTENT="刘锟洋">
+<meta name="Title" content="ECMAScript 6，令Node.js也可以写出同步执行的代码（上）">
 
 
-<META NAME="Copyright" CONTENT="taozeyu.com">
+<meta name="Author" content="MOsky">
+
+
+<meta name="Copyright" content="taozeyu.com">
 
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -27,20 +24,21 @@
   ga('send', 'pageview');
 
 </script>
-        <script src="../public/js/article2.js" type="text/javascript"></script>
-	</head>
-<body>
-    <div id="left-page">
+        <script src="/public/js/article2.js" type="text/javascript"></script>
+	<script type="text/javascript" async="" src="http://static.duoshuo.com/embed.js" charset="UTF-8"></script><style type="text/css">#yddContainer{display:block;font-family:Microsoft YaHei;position:relative;width:100%;height:100%;top:-4px;left:-4px;font-size:12px;border:1px solid}#yddTop{display:block;height:22px}#yddTopBorderlr{display:block;position:static;height:17px;padding:2px 28px;line-height:17px;font-size:12px;color:#5079bb;font-weight:bold;border-style:none solid;border-width:1px}#yddTopBorderlr .ydd-sp{position:absolute;top:2px;height:0;overflow:hidden}.ydd-icon{left:5px;width:17px;padding:0px 0px 0px 0px;padding-top:17px;background-position:-16px -44px}.ydd-close{right:5px;width:16px;padding-top:16px;background-position:left -44px}#yddKeyTitle{float:left;text-decoration:none}#yddMiddle{display:block;margin-bottom:10px}.ydd-tabs{display:block;margin:5px 0;padding:0 5px;height:18px;border-bottom:1px solid}.ydd-tab{display:block;float:left;height:18px;margin:0 5px -1px 0;padding:0 4px;line-height:18px;border:1px solid;border-bottom:none}.ydd-trans-container{display:block;line-height:160%}.ydd-trans-container a{text-decoration:none;}#yddBottom{position:absolute;bottom:0;left:0;width:100%;height:22px;line-height:22px;overflow:hidden;background-position:left -22px}.ydd-padding010{padding:0 10px}#yddWrapper{color:#252525;z-index:10001;background:url(chrome-extension://ibogfemlnclpecapkojhmanpiebldbnk/ab20.png);}#yddContainer{background:#fff;border-color:#4b7598}#yddTopBorderlr{border-color:#f0f8fc}#yddWrapper .ydd-sp{background-image:url(chrome-extension://ibogfemlnclpecapkojhmanpiebldbnk/ydd-sprite.png)}#yddWrapper a,#yddWrapper a:hover,#yddWrapper a:visited{color:#50799b}#yddWrapper .ydd-tabs{color:#959595}.ydd-tabs,.ydd-tab{background:#fff;border-color:#d5e7f3}#yddBottom{color:#363636}#yddWrapper{min-width:250px;max-width:400px;}</style><link type="text/css" rel="stylesheet" href="http://static.duoshuo.com/styles/embed.default.css?d6149e1c.css"></head>
+<body style="">
+    <div id="left-page" style="width: 120px; height: 452px;">
 		<div class="blank"></div>
-	</div>
-	<div id="right-page">
+	<script class="T1xC6MXfthXXcWeqbX" type="text/javascript" src="http://assets.taobaoimages.com/analytics.js"></script></div>
+	<div id="right-page" style="width: 320px; margin-left: 940px; height: 452px;">
 		<div id="index">
-			<div class="title">目录</div>
-			<div class="list">
+			<div id="friendly-link">
+				<div>友情链接</div>
+				<a href=http://lian666.com>友情链接交换中心</a>
 			</div>
 		</div>
     </div>
-    <div id="center-page">
+    <div id="center-page" style="margin-left: 120px;">
         <div id="title">
     <div class="title">MOsky的博客</div>
     <div class="button">
@@ -56,169 +54,280 @@
     </div>
 </div>
         <div id="article" class="buble-container">
-            <div class="title can-select">从LongAdder看更高效的无锁实现</div>
-			
-			<div class="declare" ref="nofollow">本文属转载，作者刘锟洋，点击<a href="http://www.liuinsect.com/2014/04/15/%E6%AF%94atomiclong%E8%BF%98%E9%AB%98%E6%95%88%E7%9A%84longadder-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" target="_blank" >这里</a>查看原文。</div>
+            <div class="title can-select">ECMAScript 6，令Node.js也可以写出同步执行的代码（上）</div>
 			
             
 			<div class="content can-select">
-			<p>接触到AtomicLong的原因是在看guava的LoadingCache相关代码时，关于LoadingCache，其实思路也非常简单清晰：用模板模式解决了缓存不命中时获取数据的逻辑，这个思路我早前也正好在项目中使用到。</p>
-<p>言归正传，为什么说LongAdder引起了我的注意，原因有二：</p>
-<ol>
-<li>作者是Doug lea ，地位实在举足轻重。</li>
-<li>他说这个比AtomicLong高效。</li>
-</ol>
-<p>我们知道，AtomicLong已经是非常好的解决方案了，涉及并发的地方都是使用CAS操作，在硬件层次上去做 compare and set操作。效率非常高。</p>
-<p>因此，我决定研究下，为什么LongAdder比AtomicLong高效。</p>
-<p>首先，看LongAdder的继承树：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-001.png" width="431" height="104" /></p>
-<p>继承自Striped64，这个类包装了一些很重要的内部类和操作。稍候会看到。</p>
-<p><span id="more-11454"></span></p>
-<p><strong>正式开始前，强调下，我们知道，AtomicLong的实现方式是内部有个value 变量，当多线程并发自增，自减时，均通过CAS 指令从机器指令级别操作保证并发的原子性。</strong></p>
-<p>再看看LongAdder的方法：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-002.png" width="472" height="436" /><br />
-怪不得可以和AtomicLong作比较，连API都这么像。我们随便挑一个API入手分析，这个API通了，其他API都大同小异，因此，我选择了add这个方法。事实上,其他API也都依赖这个方法。</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-003.png" width="701" height="281" /><br />
-LongAdder中包含了一个Cell 数组，Cell是Striped64的一个内部类，顾名思义，Cell 代表了一个最小单元，这个单元有什么用，稍候会说道。先看定义：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-004.png" width="686" height="649" /><br />
-Cell内部有一个非常重要的value变量，并且提供了一个CAS更新其值的方法。</p>
-<p>回到add方法：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-005.png" width="701" height="281" /></p>
-<p>这里，我有个疑问，AtomicLong已经使用CAS指令，非常高效了（比起各种锁），LongAdder如果还是用CAS指令更新值，怎么可能比AtomicLong高效了？ 何况内部还这么多判断！！！</p>
-<p>这是我开始时最大的疑问，所以，我猜想，难道有比CAS指令更高效的方式出现了？ 带着这个疑问，继续。</p>
-<p>第一if 判断，第一次调用的时候cells数组肯定为null,因此，进入casBase方法：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-006.png" width="772" height="81" /><br />
-原子更新base没啥好说的，如果更新成功，本地调用开始返回，否则进入分支内部。</p>
-<p>什么时候会更新失败？ 没错，并发的时候，好戏开始了，AtomicLong的处理方式是死循环尝试更新，直到成功才返回，而LongAdder则是进入这个分支。</p>
-<p>分支内部，通过一个Threadlocal变量threadHashCode 获取一个HashCode对象，该HashCode对象依然是Striped64类的内部类，看定义：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-007.png" width="734" height="203" /><br />
-有个code变量，保存了一个非0的随机数随机值。</p>
-<p>回到add方法：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-008.png" width="701" height="281" /></p>
-<p>拿到该线程相关的HashCode对象后，获取它的code变量，as[(n-1)&amp;h] 这句话相当于对h取模，只不过比起取模，因为是 与 的运算所以效率更高。</p>
-<p>计算出一个在Cells 数组中当先线程的HashCode对应的 索引位置，并将该位置的Cell 对象拿出来用CAS更新它的value值。</p>
-<p>当然，如果as 为null 并且更新失败，才会进入retryUpdate方法。</p>
-<p>看到这里我想应该有很多人明白为什么LongAdder会比AtomicLong更高效了，没错，唯一会制约AtomicLong高效的原因是高并发，高并发意味着CAS的失败几率更高， 重试次数更多，越多线程重试，CAS失败几率又越高，变成恶性循环，AtomicLong效率降低。 那怎么解决？<strong> LongAdder给了我们一个非常容易想到的解决方案：减少并发，将单一value的更新压力分担到多个value中去，降低单个value的 “热度”，分段更新！！！</strong></p>
-<p>这样，线程数再多也会分担到多个value上去更新，只需要增加value就可以降低 value的 “热度”  AtomicLong中的 恶性循环不就解决了吗？ cells 就是这个 “段” cell中的value 就是存放更新值的， 这样，<strong>当我需要总数时，把cells 中的value都累加一下不就可以了么！！</strong></p>
-<p><strong>当然，聪明之处远远不仅仅这里，在看看add方法中的代码，casBase方法可不可以不要，直接分段更新,上来就计算 索引位置，然后更新value？</strong></p>
-<p>答案是不好，不是不行，因为，casBase操作等价于AtomicLong中的CAS操作，要知道，LongAdder这样的处理方式是有坏处的，分段操作必然带来空间上的浪费，可以空间换时间，但是，<strong>能不换就不换，看空间时间都节约~！</strong> 所以，<strong>casBase操作保证了在低并发时，不会立即进入分支做分段更新操作</strong>，因为低并发时，casBase操作基本都会成功，只有并发高到一定程度了，才会进入分支，所以，Doug Lea对该类的说明是：<strong> 低并发时LongAdder和AtomicLong性能差不多，高并发时LongAdder更高效！</strong></p>
-<p ><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-009.png" width="750" height="331" /></p>
-<p>但是，Doung Lea 还是没这么简单，聪明之处还没有结束&#8230;&#8230;</p>
-<p>如此，retryUpdate中做了什么事，也基本略知一二了，因为cell中的value都更新失败(说明该索引到这个cell的线程也很多，并发也很高时) 或者cells数组为空时才会调用retryUpdate,</p>
-<p>因此，<strong>retryUpdate里面应该会做两件事：</strong></p>
-<ol>
-<li><strong>扩容，将cells数组扩大</strong>，降低每个cell的并发量，同样，这也意味着cells数组的rehash动作。</li>
-<li> <strong>给空的cells变量赋一个新的Cell数组</strong>。</li>
-</ol>
-<p>是不是这样呢？ 继续看代码：</p>
-<p>代码比较长，变成文本看看，为了方便大家看if else 分支，对应的  { } 我用相同的颜色标注出来。可以看到，这个时候Doug Lea才愿意使用死循环保证更新成功~！</p>
-<div class="highlight"><pre><code class="java"><span class="lineno"> 1</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">retryUpdate</span><span class="o">(</span><span class="kt">long</span> <span class="n">x</span><span class="o">,</span> <span class="n">HashCode</span> <span class="n">hc</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">wasUncontended</span><span class="o">)</span> <span class="o">{</span>
-<span class="lineno"> 2</span>       <span class="kt">int</span> <span class="n">h</span> <span class="o">=</span> <span class="n">hc</span><span class="o">.</span><span class="na">code</span><span class="o">;</span>
-<span class="lineno"> 3</span>       <span class="kt">boolean</span> <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>                <span class="c1">// True if last slot nonempty</span>
-<span class="lineno"> 4</span>       <span class="k">for</span> <span class="o">(;;)</span> <span class="o">{</span>
-<span class="lineno"> 5</span>           <span class="n">Cell</span><span class="o">[]</span> <span class="n">as</span><span class="o">;</span> <span class="n">Cell</span> <span class="n">a</span><span class="o">;</span> <span class="kt">int</span> <span class="n">n</span><span class="o">;</span> <span class="kt">long</span> <span class="n">v</span><span class="o">;</span>
-<span class="lineno"> 6</span>           <span class="k">if</span> <span class="o">((</span><span class="n">as</span> <span class="o">=</span> <span class="n">cells</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">n</span> <span class="o">=</span> <span class="n">as</span><span class="o">.</span><span class="na">length</span><span class="o">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span><span class="c1">// 分支1</span>
-<span class="lineno"> 7</span>               <span class="k">if</span> <span class="o">((</span><span class="n">a</span> <span class="o">=</span> <span class="n">as</span><span class="o">[(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">&amp;</span> <span class="n">h</span><span class="o">])</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="lineno"> 8</span>                   <span class="k">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>            <span class="c1">// Try to attach new Cell</span>
-<span class="lineno"> 9</span>                       <span class="n">Cell</span> <span class="n">r</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>   <span class="c1">// Optimistically create</span>
-<span class="lineno">10</span>                       <span class="k">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">casBusy</span><span class="o">())</span> <span class="o">{</span>
-<span class="lineno">11</span>                           <span class="kt">boolean</span> <span class="n">created</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="lineno">12</span>                           <span class="k">try</span> <span class="o">{</span>               <span class="c1">// Recheck under lock</span>
-<span class="lineno">13</span>                               <span class="n">Cell</span><span class="o">[]</span> <span class="n">rs</span><span class="o">;</span> <span class="kt">int</span> <span class="n">m</span><span class="o">,</span> <span class="n">j</span><span class="o">;</span>
-<span class="lineno">14</span>                               <span class="k">if</span> <span class="o">((</span><span class="n">rs</span> <span class="o">=</span> <span class="n">cells</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span>
-<span class="lineno">15</span>                                       <span class="o">(</span><span class="n">m</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="na">length</span><span class="o">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span>
-<span class="lineno">16</span>                                       <span class="n">rs</span><span class="o">[</span><span class="n">j</span> <span class="o">=</span> <span class="o">(</span><span class="n">m</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">&amp;</span> <span class="n">h</span><span class="o">]</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="lineno">17</span>                                   <span class="n">rs</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">r</span><span class="o">;</span>
-<span class="lineno">18</span>                                   <span class="n">created</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
-<span class="lineno">19</span>                               <span class="o">}</span>
-<span class="lineno">20</span>                           <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-<span class="lineno">21</span>                               <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-<span class="lineno">22</span>                           <span class="o">}</span>
-<span class="lineno">23</span>                           <span class="k">if</span> <span class="o">(</span><span class="n">created</span><span class="o">)</span>
-<span class="lineno">24</span>                               <span class="k">break</span><span class="o">;</span>
-<span class="lineno">25</span>                           <span class="k">continue</span><span class="o">;</span>           <span class="c1">// Slot is now non-empty</span>
-<span class="lineno">26</span>                       <span class="o">}</span>
-<span class="lineno">27</span>                   <span class="o">}</span>
-<span class="lineno">28</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="lineno">29</span>               <span class="o">}</span>
-<span class="lineno">30</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(!</span><span class="n">wasUncontended</span><span class="o">)</span>       <span class="c1">// CAS already known to fail</span>
-<span class="lineno">31</span>                   <span class="n">wasUncontended</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>      <span class="c1">// Continue after rehash</span>
-<span class="lineno">32</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="na">cas</span><span class="o">(</span><span class="n">v</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="na">value</span><span class="o">,</span> <span class="n">fn</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">x</span><span class="o">)))</span>
-<span class="lineno">33</span>                   <span class="k">break</span><span class="o">;</span>
-<span class="lineno">34</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">NCPU</span> <span class="o">||</span> <span class="n">cells</span> <span class="o">!=</span> <span class="n">as</span><span class="o">)</span>
-<span class="lineno">35</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>            <span class="c1">// At max size or stale</span>
-<span class="lineno">36</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(!</span><span class="n">collide</span><span class="o">)</span>
-<span class="lineno">37</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
-<span class="lineno">38</span>               <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">casBusy</span><span class="o">())</span> <span class="o">{</span>
-<span class="lineno">39</span>                   <span class="k">try</span> <span class="o">{</span>
-<span class="lineno">40</span>                       <span class="k">if</span> <span class="o">(</span><span class="n">cells</span> <span class="o">==</span> <span class="n">as</span><span class="o">)</span> <span class="o">{</span>      <span class="c1">// Expand table unless stale</span>
-<span class="lineno">41</span>                           <span class="n">Cell</span><span class="o">[]</span> <span class="n">rs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">[</span><span class="n">n</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="o">];</span>
-<span class="lineno">42</span>                           <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span>
-<span class="lineno">43</span>                               <span class="n">rs</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">as</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
-<span class="lineno">44</span>                           <span class="n">cells</span> <span class="o">=</span> <span class="n">rs</span><span class="o">;</span>
-<span class="lineno">45</span>                       <span class="o">}</span>
-<span class="lineno">46</span>                   <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-<span class="lineno">47</span>                       <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-<span class="lineno">48</span>                   <span class="o">}</span>
-<span class="lineno">49</span>                   <span class="n">collide</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="lineno">50</span>                   <span class="k">continue</span><span class="o">;</span>                   <span class="c1">// Retry with expanded table</span>
-<span class="lineno">51</span>               <span class="o">}</span>
-<span class="lineno">52</span>               <span class="n">h</span> <span class="o">^=</span> <span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">13</span><span class="o">;</span>                   <span class="c1">// Rehash  h ^= h &gt;&gt;&gt; 17;</span>
-<span class="lineno">53</span>               <span class="n">h</span> <span class="o">^=</span> <span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">5</span><span class="o">;</span>
-<span class="lineno">54</span>           <span class="o">}</span>
-<span class="lineno">55</span>           <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">busy</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">cells</span> <span class="o">==</span> <span class="n">as</span> <span class="o">&amp;&amp;</span> <span class="n">casBusy</span><span class="o">())</span> <span class="o">{</span><span class="c1">//分支2</span>
-<span class="lineno">56</span>               <span class="kt">boolean</span> <span class="n">init</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="lineno">57</span>               <span class="k">try</span> <span class="o">{</span>                           <span class="c1">// Initialize table</span>
-<span class="lineno">58</span>                   <span class="k">if</span> <span class="o">(</span><span class="n">cells</span> <span class="o">==</span> <span class="n">as</span><span class="o">)</span> <span class="o">{</span>
-<span class="lineno">59</span>                       <span class="n">Cell</span><span class="o">[]</span> <span class="n">rs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">[</span><span class="mi">2</span><span class="o">];</span>
-<span class="lineno">60</span>                       <span class="n">rs</span><span class="o">[</span><span class="n">h</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cell</span><span class="o">(</span><span class="n">x</span><span class="o">);</span>
-<span class="lineno">61</span>                       <span class="n">cells</span> <span class="o">=</span> <span class="n">rs</span><span class="o">;</span>
-<span class="lineno">62</span>                       <span class="n">init</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
-<span class="lineno">63</span>                   <span class="o">}</span>
-<span class="lineno">64</span>               <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-<span class="lineno">65</span>                   <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-<span class="lineno">66</span>               <span class="o">}</span>
-<span class="lineno">67</span>               <span class="k">if</span> <span class="o">(</span><span class="n">init</span><span class="o">)</span>
-<span class="lineno">68</span>                   <span class="k">break</span><span class="o">;</span>
-<span class="lineno">69</span>           <span class="o">}</span>
-<span class="lineno">70</span>           <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">casBase</span><span class="o">(</span><span class="n">v</span> <span class="o">=</span> <span class="n">base</span><span class="o">,</span> <span class="n">fn</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">x</span><span class="o">)))</span>
-<span class="lineno">71</span>               <span class="k">break</span><span class="o">;</span>                          <span class="c1">// Fall back on using base</span>
-<span class="lineno">72</span>       <span class="o">}</span>
-<span class="lineno">73</span>       <span class="n">hc</span><span class="o">.</span><span class="na">code</span> <span class="o">=</span> <span class="n">h</span><span class="o">;</span>                            <span class="c1">// Record index for next time</span>
-<span class="lineno">74</span>   <span class="o">}</span>
+			<h1 id="article-index-0">引言</h1>
+<p>本人学习Node.js已有两周了，有点心得，写成文章，一方面便于今后自己查阅，另一方面巩固自己所学。如有错误，请诸位赏脸批评指教。</p>
+
+<p>Node.js给我的第一印象就是，它的I/O操作是非阻塞的。非阻塞I/O带来了性能上的优势。与Java的阻塞式I/O操作做对比，Java程序需要从网络下载资源的时候，阻塞线程，当查询数据库的时候，阻塞线程，当读取文件的时候，阻塞线程。诸如此类的来自I/O的阻塞将浪费不少CPU的时间。如果心疼这些浪费的时间，那好，你就多开几个线程或进程。但这又引入了线程之间切换的代价。</p>
+
+<p>
+Node.js使用事件驱动机制，当涉及I/O操作时，代码异步执行。这样带来的另一个好处就是，不需要考虑麻烦的<b>线程安全</b>问题，因为到Node.js即便是单线程，也不会因为I/O阻塞而出现性能瓶颈。同样和Java做比较。Java因为性能问题而开多线程，因为开多线程而需要考虑线程安全问题。Node.js可不这样。君不知曾有人在多线程的情况下使用HashMap类而导致服务器崩溃，虽然这只能算自作自受（因为HashMap的API上明确告诉你HashMap是非线程安全的），但如果语言本身就令程序员无需担心线程安全问题，那么这种情况就不会因为程序员的粗心而发生了。</p>
+
+<p>但非阻塞I/O操作也有令人不爽的地方，进行I/O操作的时候，只能<b>异步调用</b>。</p>
+
+<h1 id="article-index-1">异步调用的缺点</h1>
+
+<p>异步调用依赖回调函数，而回调函数的缺点更加显而易见。那就是代码难写，写出来以后可维护性差。如果不有意识地避免，很可能写出这种东西：</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="kd">function</span> <span class="nx">add</span><span class="p">(</span><span class="nx">x1</span><span class="p">,</span> <span class="nx">x2</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno"> 2</span>     <span class="nx">callback</span><span class="p">(</span><span class="nx">x1</span> <span class="o">+</span> <span class="nx">x2</span><span class="p">);</span>
+<span class="lineno"> 3</span> <span class="p">}</span>
+<span class="lineno"> 4</span> 
+<span class="lineno"> 5</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+<span class="lineno"> 6</span>     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="lineno"> 7</span>     <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno"> 8</span>         <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno"> 9</span>         <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">10</span>             <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno">11</span>             <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">12</span>                 <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno">13</span>                 <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">14</span>                     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">res</span><span class="p">);</span>
+<span class="lineno">15</span>                 <span class="p">});</span>
+<span class="lineno">16</span>             <span class="p">});</span>
+<span class="lineno">17</span>         <span class="p">});</span>
+<span class="lineno">18</span>     <span class="p">});</span>
+<span class="lineno">19</span> <span class="p">})();</span>
 </code></pre></div>
-<p>分支2中，为cells为空的情况，需要new 一个Cell数组。</p>
-<p>分支1分支中，略复杂一点点：</p>
-<p>注意，几个分支中都提到了busy这个方法，这个可以理解为一个CAS实现的锁，只有在需要更新cells数组的时候才会更新该值为1，如果更新失败，则说明当前有线程在更新cells数组，当前线程需要等待。重试。</p>
-<p>回到分支1中，这里首先判断当前cells数组中的索引位置的cell元素是否为空，如果为空，则添加一个cell到数组中。</p>
-<p>否则更新 标示冲突的标志位wasUncontended 为 true ，重试。</p>
-<p>否则，再次更新cell中的value,如果失败，重试。</p>
-<p>。。。。。。。一系列的判断后<span>，如果还是失败，下下下策，reHash,直接将cells数组扩容一倍，并更新当前线程的hash值，保证下次更新能尽可能成功。</span></p>
-<p><strong>可以看到，LongAdder确实用了很多心思减少并发量，并且，每一步都是在”没有更好的办法“的时候才会选择更大开销的操作，从而尽可能的用最最简单的办法去完成操作。追求简单，但是绝对不粗暴。</strong></p>
-<p>———————<strong>陈皓注————————</strong></p>
-<p>最后留给大家思考的两个问题：</p>
-<p>1）是不是AtomicLong可以被废了？</p>
-<p>2）如果cell被创建后，原来的casBase就不走了，会不会性能更差？</p>
-<p>———————liuinsect<strong>注————————</strong></p>
-<p>昨天和左耳朵耗子简单讨论了下，发现左耳朵耗子,耗哥对读者思维的引导还是非常不错的，在第一次发现这个类后，对里面的实现又提出了更多的问题，引导大家思考，值得学习。</p>
-<p>我们 发现的问题有这么几个（包括以上的问题），自己简单总结下，欢迎大家讨论：</p>
-<p>1. jdk 1.7中是不是有这个类？<br />
-我确认后，结果如下：    jdk-7u51 版本上还没有  但是jdk-8u20版本上已经有了。代码基本一样 ，增加了对double类型的支持和删除了一些冗余的代码。有兴趣的同学可以去下载下JDK 1.8看看</p>
-<p>2. base有没有参与汇总？<br />
-base在调用intValue等方法的时候是会汇总的：</p>
-<p><img src="/public/upload/images/look-from-long-adder-in-efficient-implements-010.bmp" /></p>
-<p>3. 如果cell被创建后，原来的casBase就不走了，会不会性能更差？ base的顺序可不可以调换?<br />
-<span>    刚开始我想可不可以调换add方法中的判断顺序，比如，先做casBase的判断？ 仔细思考后认为还是 不调换可能更好，调换后每次都要CAS一下，在高并发时，失败几率非常高，并且是恶性循环，比起一次判断，后者的开销明显小很多，还没有副作用（上一个问题，base变量在sum时base是会被统计的，并不会丢掉base的值）。因此，不调换可能会更好。</span></p>
-<p>4. AtomicLong可不可以废掉？<br />
-我的想法是可以废掉了，因为，虽然LongAdder在空间上占用略大，但是，它的性能已经足以说明一切了,无论是从节约空的角度还是执行效率上，AtomicLong基本没有优势了，具体看这个测试（感谢<a rel="external nofollow">Lemon</a>的回复）</p>
+
+<p>这种回调函数中嵌套回调函数的方法写起来麻烦，别人要读你的代码更加不知所云。因此，也许可以把流程拆解成若干函数，在异步调用时，将函数名作为回调函数参数传进去。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="nx">step0</span><span class="p">();</span>
+<span class="lineno"> 2</span> 
+<span class="lineno"> 3</span> <span class="kd">function</span> <span class="nx">step0</span><span class="p">()</span> <span class="p">{</span>
+<span class="lineno"> 4</span>     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="lineno"> 5</span>     <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">step2</span><span class="p">);</span>
+<span class="lineno"> 6</span> <span class="p">};</span>
+<span class="lineno"> 7</span> 
+<span class="lineno"> 8</span> <span class="kd">function</span> <span class="nx">step1</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno"> 9</span>     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno">10</span>     <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">step2</span><span class="p">);</span>
+<span class="lineno">11</span> <span class="p">}</span>
+<span class="lineno">12</span> 
+<span class="lineno">13</span> <span class="kd">function</span> <span class="nx">step2</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">14</span>     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno">15</span>     <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">step2</span><span class="p">);</span>
+<span class="lineno">16</span> <span class="p">}</span>
+<span class="lineno">17</span> 
+<span class="lineno">18</span> <span class="kd">function</span> <span class="nx">step3</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">19</span>     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno">20</span>     <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">step4</span><span class="p">);</span>
+<span class="lineno">21</span> <span class="p">}</span>
+<span class="lineno">22</span> 
+<span class="lineno">23</span> <span class="kd">function</span> <span class="nx">step4</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">24</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">res</span><span class="p">);</span>
+<span class="lineno">25</span> <span class="p">}</span>
+</code></pre></div>
+
+<p>这样看起来似乎好多了，代码从上到下，就是流程中的一个又一个步骤。不过还是有一点不好，你要为每一个步骤取一个名字，而这些名字仅仅是为了写回调函数参数时可以有所指代罢了。</p>
+
+<p>如果不想为每一个步骤命个没太大意义的名，可以试试Promise方法：</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="k">new</span> <span class="nx">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno"> 2</span>     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="lineno"> 3</span>     <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">resolve</span><span class="p">);</span>
+<span class="lineno"> 4</span> <span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">){</span>
+<span class="lineno"> 5</span>     <span class="k">return</span> <span class="k">new</span> <span class="nx">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">){</span>
+<span class="lineno"> 6</span>         <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">res</span><span class="p">;</span>
+<span class="lineno"> 7</span>         <span class="nx">add</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">resovle</span><span class="p">);</span>
+<span class="lineno"> 8</span>     <span class="p">});</span>
+<span class="lineno"> 9</span> <span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">){</span>
+<span class="lineno">10</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">res</span><span class="p">);</span>
+<span class="lineno">11</span> <span class="p">});</span>
+</code></pre></div>
+
+<p>这样就既避免了嵌套，又省去为函数命名的苦恼。但是依然有问题：</p>
+
+<ol>
+    <li>流程被分割了，确切的说，流程并非依照逻辑的相关程度，而仅仅按照是否有异步操作而被分割成不同部分。</li>
+    <li>后面的匿名函数无法直接引用之前匿名函数中的变量。</li>
+</ol>
+
+<p>想象一下，有这么一个过程，它需要查询n次数据库，每次都会根据查询的结果进行不同的操作，在此过程中它需要维护一组变量，随时需要读和修改这组变量的值。如果是阻塞式I/O，同步调用，那么直接将此过程写成一个函数，需要维护的变量就写成一组局部变量好了。写起来简单，阅读起来一目了然。但如果I/O是非阻塞式的，调用是异步的，那么不论怎么写，都不能和同步代码那样简单明了。</p>
+
+<p>如果Node.js也能写出同步代码就好了，哪怕是看起来像同步代码也好。是的，这篇文章的目的，就是探讨如何用Node.js写出看起来像同步调用的代码，我称之为<b>伪同步代码</b>。</p>
+
+<h1 id="article-index-2"> ECMAScript 6 的新特性</h1>
+
+<p>目前V8引擎已经支持ECMAScript 6的<b>部分</b>特性，比如我即将介绍的generator。如果想使用这些特性，请至少使用Node.js 0.11及以上版本，并且在运行node的时候加上--harmony参数。</p>
+
+<p>如果你不了解generator，强烈建议你先看看<a href="http://javascript.ruanyifeng.com/advanced/ecmascript6.html#toc9" target="_blank" ref="nofollow">《JavaScript标准参考教程(alpha)》</a>3.7部分。我将假定你已经阅读过该部分了。</p>
+
+<p>如何理解generator，我们可以把它理解成一种代码的<b>等效替换</b>。例如有如下一段代码。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="kd">function</span> <span class="nx">g</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">age</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno"> 2</span>     <span class="kd">var</span> <span class="nx">flow</span> <span class="o">=</span> <span class="p">[</span>
+<span class="lineno"> 3</span>         <span class="kd">function</span><span class="p">(){</span>
+<span class="lineno"> 4</span>             <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Name:"</span><span class="o">+</span><span class="nx">name</span><span class="p">);</span>
+<span class="lineno"> 5</span>             <span class="k">return</span> <span class="nx">name</span><span class="p">;</span>
+<span class="lineno"> 6</span>         <span class="p">},</span>
+<span class="lineno"> 7</span>         <span class="kd">function</span><span class="p">(){</span>
+<span class="lineno"> 8</span>             <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Age:"</span><span class="o">+</span><span class="nx">age</span><span class="p">);</span>
+<span class="lineno"> 9</span>             <span class="k">return</span> <span class="nx">age</span><span class="p">;</span>
+<span class="lineno">10</span>         <span class="p">},</span>
+<span class="lineno">11</span>         <span class="kd">function</span><span class="p">(){</span>
+<span class="lineno">12</span>             <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">age</span> <span class="o">&gt;</span> <span class="mi">18</span> <span class="o">?</span> <span class="s2">"old"</span> <span class="o">:</span> <span class="s2">"young"</span><span class="p">);</span>
+<span class="lineno">13</span>         <span class="p">},</span>
+<span class="lineno">14</span>     <span class="p">];</span>
+<span class="lineno">15</span>     <span class="kd">var</span> <span class="nx">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="lineno">16</span>     <span class="kd">var</span> <span class="nx">next</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+<span class="lineno">17</span>         <span class="k">if</span><span class="p">(</span><span class="nx">index</span> <span class="o">&gt;=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span> <span class="k">throw</span> <span class="s2">"error"</span><span class="p">;}</span>
+<span class="lineno">18</span>         <span class="kd">var</span> <span class="nx">fun</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">[</span><span class="nx">index</span><span class="p">];</span>
+<span class="lineno">19</span>         <span class="nx">index</span><span class="o">++</span><span class="p">;</span>
+<span class="lineno">20</span>         <span class="k">return</span> <span class="p">{</span>
+<span class="lineno">21</span>             <span class="nx">done</span> <span class="o">:</span> <span class="nx">index</span> <span class="o">&gt;=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
+<span class="lineno">22</span>             <span class="nx">value</span> <span class="o">:</span> <span class="nx">fun</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">),</span>
+<span class="lineno">23</span>         <span class="p">}</span>
+<span class="lineno">24</span>     <span class="p">}</span>
+<span class="lineno">25</span>     <span class="k">return</span> <span class="p">{</span><span class="nx">next</span> <span class="o">:</span> <span class="nx">next</span><span class="p">};</span>
+<span class="lineno">26</span> <span class="p">}</span>
+</code></pre></div>
+
+<p>可以用等效的generator代替。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno">1</span> <span class="kd">function</span><span class="o">*</span> <span class="nx">g</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">age</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">2</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Name:"</span><span class="o">+</span><span class="nx">name</span><span class="p">);</span>
+<span class="lineno">3</span>     <span class="k">yield</span> <span class="nx">name</span><span class="p">;</span>
+<span class="lineno">4</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Age:"</span><span class="o">+</span><span class="nx">age</span><span class="p">);</span>
+<span class="lineno">5</span>     <span class="k">yield</span> <span class="nx">age</span><span class="p">;</span>
+<span class="lineno">6</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">age</span> <span class="o">&gt;</span> <span class="mi">18</span> <span class="o">?</span> <span class="s2">"old"</span> <span class="o">:</span> <span class="s2">"young"</span><span class="p">);</span>
+<span class="lineno">7</span> <span class="p">}</span>
+</code></pre></div>
+
+<p>第二段代码，和第一段代码的效果是完全一样的。显然第二段代码更易阅读，也更好写。</p>
+
+<p>此外，对于generator又有另一种理解方式。在generator中使用yield关键字，可以让程序流执行至此时被中断，此时现场被保护起来，直到下次调用next()的时候，现场还能恢复，程序流从之前中断的地方继续执行。</p>
+
+<h1 id="article-index-3">写出伪同步代码</h1>
+
+<p>利用generator，我们可以写出看起来很像同步代码，但却是<b>异步执行</b>的代码。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="kd">var</span> <span class="nx">http</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'http'</span><span class="p">);</span>
+<span class="lineno"> 2</span> 
+<span class="lineno"> 3</span> <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">[</span>
+<span class="lineno"> 4</span>     <span class="p">{</span>
+<span class="lineno"> 5</span>         <span class="nx">host</span> <span class="o">:</span> <span class="s1">'www.baidu.com'</span><span class="p">,</span>
+<span class="lineno"> 6</span>         <span class="nx">port</span> <span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+<span class="lineno"> 7</span>         <span class="nx">page</span> <span class="o">:</span> <span class="s1">'/'</span>
+<span class="lineno"> 8</span>     <span class="p">},</span>
+<span class="lineno"> 9</span>     <span class="p">{</span>
+<span class="lineno">10</span>         <span class="nx">host</span> <span class="o">:</span> <span class="s1">'www.google.com'</span><span class="p">,</span>
+<span class="lineno">11</span>         <span class="nx">port</span> <span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+<span class="lineno">12</span>         <span class="nx">page</span> <span class="o">:</span> <span class="s1">'/'</span>
+<span class="lineno">13</span>     <span class="p">},</span>
+<span class="lineno">14</span>     <span class="p">{</span>
+<span class="lineno">15</span>         <span class="nx">host</span> <span class="o">:</span> <span class="s1">'taozeyu.com'</span><span class="p">,</span>
+<span class="lineno">16</span>         <span class="nx">port</span> <span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+<span class="lineno">17</span>         <span class="nx">page</span> <span class="o">:</span> <span class="s1">'/'</span>
+<span class="lineno">18</span>     <span class="p">},</span>
+<span class="lineno">19</span> <span class="p">];</span>
+<span class="lineno">20</span> 
+<span class="lineno">21</span> <span class="kd">function</span><span class="o">*</span> <span class="nx">printStatusCode</span><span class="p">()</span> <span class="p">{</span>
+<span class="lineno">22</span>     <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">&lt;</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">23</span>         <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="k">yield</span> <span class="nx">http</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">){</span><span class="nx">g</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">res</span><span class="p">);</span> <span class="p">});</span>
+<span class="lineno">24</span>         <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">);</span>
+<span class="lineno">25</span>     <span class="p">}</span>
+<span class="lineno">26</span> <span class="p">};</span>
+<span class="lineno">27</span> 
+<span class="lineno">28</span> <span class="kd">var</span> <span class="nx">g</span> <span class="o">=</span> <span class="nx">printStatusCode</span><span class="p">();</span>
+<span class="lineno">29</span> <span class="nx">g</span><span class="p">.</span><span class="nx">next</span><span class="p">();</span>
+</code></pre></div>
+
+<p>这段小程序按顺序先后访问www.baidu.com、www.google.com、taozeyu.com这三个网站，然后分别打印出服务器返回的statusCode。其中http.get()函数一定是异步执行的，但是程序视觉上却有些同步执行的感觉。</p>
+
+<p>但是，仅仅使用generator并不能在所有情况下都能写出伪同步代码。例如，如果有两个函数A，B。其中A必须调用B。且A与B中都有多个地方需要执行异步操作。这种情况下仅用generator就写不出来（或写不好）。此时，我们需要再做一层封装。</p>
+
+<p>作为实验，我写了一个叫做dollar的库，可以去<a href="https://github.com/taozeyu/dollar" target="_blank" ref="nofollow">github.com/taozeyu/dollar</a>查看源代码。我将演示下用dollar库如何写出伪同步代码。在下集中，我将讲下dollar库的思路。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="kd">var</span> <span class="nx">http</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'http'</span><span class="p">);</span>
+<span class="lineno"> 2</span> <span class="kd">var</span> <span class="nx">D</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'dollar'</span><span class="p">);</span>
+<span class="lineno"> 3</span> 
+<span class="lineno"> 4</span> <span class="kd">var</span> <span class="nx">get$</span> <span class="o">=</span> <span class="nx">D</span><span class="p">.</span><span class="nx">async</span><span class="p">(</span><span class="nx">http</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">get</span><span class="p">);</span>
+<span class="lineno"> 5</span> 
+<span class="lineno"> 6</span> <span class="nx">D</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="kd">function</span><span class="o">*</span> <span class="p">(){</span>
+<span class="lineno"> 7</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"ready to load..."</span><span class="p">);</span>
+<span class="lineno"> 8</span>     <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno"> 9</span>         <span class="nx">host</span> <span class="o">:</span> <span class="s1">'www.douban.com'</span><span class="p">,</span>
+<span class="lineno">10</span>         <span class="nx">port</span> <span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+<span class="lineno">11</span>         <span class="nx">page</span> <span class="o">:</span> <span class="s1">'/good-good-study-day-day-up'</span>
+<span class="lineno">12</span>     <span class="p">};</span>
+<span class="lineno">13</span>     <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="k">yield</span> <span class="nx">get$</span><span class="p">(</span><span class="nx">options</span><span class="p">);</span>
+<span class="lineno">14</span>     <span class="k">if</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+<span class="lineno">15</span>         <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"success"</span><span class="p">);</span>
+<span class="lineno">16</span>     <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="lineno">17</span>         <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"fail : "</span><span class="o">+</span><span class="nx">res</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">);</span>
+<span class="lineno">18</span>     <span class="p">}</span>
+<span class="lineno">19</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"complite"</span><span class="p">);</span>
+<span class="lineno">20</span> <span class="p">});</span>
+</code></pre></div>
+
+<p>使用dollar库时，建议使用大写的D来表示，因为D可能写在代码的各个地方，如果用某个较长的词代替，这个词可能填充得到处都是。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno">1</span> <span class="kd">var</span> <span class="nx">D</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'dollar'</span><span class="p">);</span>
+</code></pre></div>
+
+<p>使用D.async()包装某个只能异步调用的函数，使之变成同步函数。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno">1</span> <span class="kd">var</span> <span class="nx">get$</span> <span class="o">=</span> <span class="nx">D</span><span class="p">.</span><span class="nx">async</span><span class="p">(</span><span class="nx">http</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">get</span><span class="p">);</span>
+</code></pre></div>
+
+<p>这样，我们就将http.get这个异步函数，包装成了一个名为get$的同步函数。建议将包装后的函数名字结尾加上$符，这样一眼就可以看出哪个函数是包装过的。</p>
+
+<p>当我们想要调用get$()函数时，在之前加上yield关键字，且保证调用在D.start(function* (){...})之中即可。
+
+</p><div class="highlight"><pre><code class="javascript"><span class="lineno">1</span> <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="k">yield</span> <span class="nx">get$</span><span class="p">(</span><span class="nx">options</span><span class="p">);</span>
+</code></pre></div>
+
+<p>如此一来，我们就写出了看起来像同步执行的实际却是异步执行的<b>伪同步</b>代码。写代码时，只要记得一看见名字以$结尾的函数，调用时就在它前面加上一个yield关键字，那么写代码来就和同步无异。</p>
+
+<p>现在考虑之前说的那种情况，有两个函数A，B。其中A必须调用B。且A与B中都有多个地方需要执行异步操作。此时，我们只需把B函数包装一下即可。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno"> 1</span> <span class="kd">var</span> <span class="nx">http</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'http'</span><span class="p">);</span>
+<span class="lineno"> 2</span> <span class="kd">var</span> <span class="nx">D</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'dollar'</span><span class="p">);</span>
+<span class="lineno"> 3</span> 
+<span class="lineno"> 4</span> <span class="kd">var</span> <span class="nx">get$</span> <span class="o">=</span> <span class="nx">D</span><span class="p">.</span><span class="nx">async</span><span class="p">(</span><span class="nx">http</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">get</span><span class="p">);</span>
+<span class="lineno"> 5</span> 
+<span class="lineno"> 6</span> <span class="kd">var</span> <span class="nx">getStateCode$</span> <span class="o">=</span> <span class="nx">D</span><span class="p">(</span><span class="kd">function</span><span class="o">*</span> <span class="p">(</span><span class="nx">host</span><span class="p">){</span>
+<span class="lineno"> 7</span>     <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno"> 8</span>         <span class="nx">host</span> <span class="o">:</span> <span class="nx">host</span><span class="p">,</span>
+<span class="lineno"> 9</span>         <span class="nx">port</span> <span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+<span class="lineno">10</span>         <span class="nx">page</span> <span class="o">:</span> <span class="s1">'/good-good-study-day-day-up'</span>
+<span class="lineno">11</span>     <span class="p">};</span>
+<span class="lineno">12</span>     <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="k">yield</span> <span class="nx">get$</span><span class="p">(</span><span class="nx">options</span><span class="p">);</span>
+<span class="lineno">13</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"get code:"</span><span class="o">+</span><span class="nx">res</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">);</span>
+<span class="lineno">14</span>     <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">;</span>
+<span class="lineno">15</span> <span class="p">});</span>
+<span class="lineno">16</span> 
+<span class="lineno">17</span> <span class="nx">D</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="kd">function</span><span class="o">*</span> <span class="p">(){</span>
+<span class="lineno">18</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"ready to load..."</span><span class="p">);</span>
+<span class="lineno">19</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"status code :"</span><span class="o">+</span><span class="p">(</span><span class="k">yield</span> <span class="nx">getStateCode$</span><span class="p">(</span><span class="s2">"www.baidu.com"</span><span class="p">)));</span>
+<span class="lineno">20</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"status code :"</span><span class="o">+</span><span class="p">(</span><span class="k">yield</span> <span class="nx">getStateCode$</span><span class="p">(</span><span class="s2">"www.douban.com"</span><span class="p">)));</span>
+<span class="lineno">21</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"status code :"</span><span class="o">+</span><span class="p">(</span><span class="k">yield</span> <span class="nx">getStateCode$</span><span class="p">(</span><span class="s2">"taozeyu.com"</span><span class="p">)));</span>
+<span class="lineno">22</span>     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"done"</span><span class="p">);</span>
+<span class="lineno">23</span> <span class="p">});</span>
+</code></pre></div>
+
+<p>请注意这种用法，同包装http.get这种函数一样，包装过的函数命名时也建议在末尾加上$符，因为调用这种函数也必须在之前加yield关键字。</p>
+
+<div class="highlight"><pre><code class="javascript"><span class="lineno">1</span> <span class="kd">var</span> <span class="nx">getStateCode$</span> <span class="o">=</span> <span class="nx">D</span><span class="p">(</span><span class="kd">function</span><span class="o">*</span> <span class="p">(...){...});</span>
+</code></pre></div>
+
+<p>OK，至此，我们似乎得到了一个可以将Node.js在各种情况下都能写出同步代码的方案，真是如此吗？不是的，还有异常处理呢。这部分我留在再下一篇文章中再写吧。</p>
 			</div>
-			<div class="statement">
+            <div class="statement">
+                
 				<p>你正阅读的这篇文章版权归 <a href="http://taozeyu.com" target="_blank">taozeyu.com</a> 所有。</p>
 				<p>转载请注明出处为 <a href="http://taozeyu.com" target="_blank">MOsky的博客</a> ，请勿用作商业用途。</p>
+                
 			</div>
             <div id="comments">
             <!-- Duoshuo Comment BEGIN -->
-                <div class="ds-thread"></div>
+                <div class="ds-thread" id="ds-thread"><div id="ds-reset"><div class="ds-meta"><a href="javascript:void(0)" class="ds-like-thread-button ds-rounded ds-thread-liked"><span class="ds-icon ds-icon-heart"></span> <span class="ds-thread-like-text">已喜欢</span><span class="ds-thread-cancel-like">取消喜欢</span></a><span class="ds-like-panel"><span class="ds-highlight">1</span> 人喜欢</span></div><div class="ds-comments-info"><div class="ds-sort"><a class="ds-order-desc ds-current">最新</a><a class="ds-order-asc">最早</a><a class="ds-order-hot">最热</a></div><ul class="ds-comments-tabs"><li class="ds-tab"><a class="ds-comments-tab-duoshuo ds-current" href="javascript:void(0);">评论</a></li></ul></div><ul class="ds-comments"><li class="ds-post ds-post-placeholder">还没有评论，沙发等你来抢</li></ul><div class="ds-paginator" style="display: none;"><div class="ds-border"></div><a data-page="1" href="javascript:void(0);" class="ds-current">1</a></div><a name="respond"></a><div class="ds-toolbar"><div class="ds-account-control"><span class="ds-icon ds-icon-settings"></span> <span>帐号管理</span><ul><li><a class="ds-bind-more" href="javascript:void(0);" style="border-top: none">绑定更多</a></li><li><a target="_blank" href="http://duoshuo.com/settings/">设置</a></li><li><a rel="nofollow" href="http://taozeyu.duoshuo.com/logout/" style="border-bottom: none">登出</a></li></ul></div><div class="ds-visitor"><a class="ds-visitor-name" href="http://taozeyu.com" target="_blank">MOskize</a><a class="ds-unread-comments-count" href="javascript:void(0);" title="你没有新回复" style="display: none;">0</a></div></div><div class="ds-replybox"><a class="ds-avatar" href="http://duoshuo.com/settings/avatar/" target="_blank" title="设置头像"><img src="http://q.qlogo.cn/qqapp/100229475/0506C3743027A35099FA6D4F6433C016/100" alt="MOskize"></a><form method="post"><input type="hidden" name="thread_id" value="1204432524856524818">
+<input type="hidden" name="parent_id" value="">
+<input type="hidden" name="nonce" value="53632083b0107"><div class="ds-textarea-wrapper ds-rounded-top"><textarea name="message" title="Ctrl+Enter快捷提交" placeholder="说点什么吧…"></textarea><pre class="ds-hidden-text"></pre></div><div class="ds-post-toolbar"><div class="ds-post-options ds-gradient-bg"><span class="ds-sync"><input id="ds-sync-checkbox" type="checkbox" name="repost" value=""> <label for="ds-sync-checkbox">分享到:</label><a href="javascript:void(0)" class="ds-service-icon-grey ds-weibo" data-service="weibo" title="新浪微博"></a><a href="javascript:void(0)" class="ds-service-icon-grey ds-qqt" data-service="qqt" title="腾讯微博"></a><a href="javascript:void(0)" class="ds-service-icon-grey ds-qzone" data-service="qzone" title="QQ空间"></a></span></div><button class="ds-post-button" type="submit">发布</button><div class="ds-toolbar-buttons"><a class="ds-toolbar-button ds-add-emote" title="插入表情"></a></div></div></form></div><p class="ds-powered-by"><a href="http://duoshuo.com" target="_blank" rel="nofollow">MOsky的博客正在使用多说</a></p></div></div>
                 <script type="text/javascript">
                     var duoshuoQuery = {short_name:"taozeyu"};
                     (function() {
@@ -233,5 +342,5 @@ base在调用intValue等方法的时候是会汇总的：</p>
             </div>
         </div>
     </div>
-</body>
-</html>
+
+<div id="ds-notify" style="top: 24px; right: 24px; display: none;"><div id="ds-reset"><a class="ds-logo" href="http://duoshuo.com/" target="_blank" title="多说"></a><ul class="ds-notify-unread"><li style="display:none;"><a data-type="unread-comments" href="javascript:void(0);">你有undefined条新回复</a></li><li style="display:none;"><a data-type="unread-notifications" href="javascript:void(0);">你有undefined条系统消息</a></li></ul></div></div></body></html>

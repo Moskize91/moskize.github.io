@@ -317,3 +317,37 @@ ul {
 #pagination .click:hover {
 	cursor: pointer;
 }
+#my-describtion {
+	text-align: center;
+	padding-top: 32px;
+}
+#my-describtion img {
+	box-shadow:2px 2px 5px #333333;
+	border: 1px solid #999999;
+}
+#my-describtion p {
+	padding-right: 27px;
+	padding-left: 27px;
+	text-align: left;
+	text-indent: 24px;
+	font-size: 17px;
+}
+
+#friendly-link {
+	padding-top: 45px;
+	padding-left: 32px;
+	padding-right: 32px;
+	padding-bottom: 17px;
+	color: #333333;
+}
+#friendly-link div {
+	font-size: 15px;
+	font-weight: bold;
+}
+#friendly-link ul {
+	font-size: 15px;
+	color: #333333;
+	padding-left: 18px;
+	padding-top: 7px;
+	margin-top: 7px;
+}
